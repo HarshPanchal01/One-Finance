@@ -1,0 +1,110 @@
+## Visual Studio
+.vs/
+*.user
+*.userosscache
+*.suo
+*.cache
+*.pdb
+*.opendb
+*.dbmdl
+
+## Build artifacts
+bin/
+obj/
+[Bb]uild/
+[Ll]og/
+
+## .NET
+*.dll
+*.exe
+*.app
+*.cache
+*.mdb
+*.config
+*.deps.json
+*.runtimeconfig.json
+*.manifest
+*.nuget.props
+*.nuget.targets
+
+## NuGet
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## MAUI specific
+# Generated platforms folders
+**/Platforms/Android/**/bin/
+**/Platforms/Android/**/obj/
+**/Platforms/iOS/**/bin/
+**/Platforms/iOS/**/obj/
+**/Platforms/MacCatalyst/**/bin/
+**/Platforms/MacCatalyst/**/obj/
+**/Platforms/Tizen/**/bin/
+**/Platforms/Tizen/**/obj/
+**/Platforms/Windows/**/bin/
+**/Platforms/Windows/**/obj/
+
+# Maui assets cache
+Resources/**/*.g.cs
+Resources/**/*.g.*
+
+# Hot reload
+.hotreload/
+
+## Android specific
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+*.keystore
+android/bin/
+android/obj/
+**/instant-run/
+
+## iOS / MacCatalyst
+*.dSYM
+*.dSYMs
+*.ipa
+*.xcuserstate
+*.xcuserdatad/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+## Windows specific
+*.appx
+*.appxsym
+*.appxupload
+BundleArtifacts/
+Generated Files/
+
+## Logs
+*.log
+
+## IDEs
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+
+## OS files
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+## Others
+*.tmp
+*.temp
+*.swp
+*.bak
+*.orig
