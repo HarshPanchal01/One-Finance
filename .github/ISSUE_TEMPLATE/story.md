@@ -1,3 +1,10 @@
+---
+name: Development Story
+about: A story outlining a new feature or development task.
+title: ""
+assignees: ""
+---
+
 ## Summary
 Add a brief, clear summary of the story/feature here. This should explain the "what" and "why" in one or two sentences.
 
