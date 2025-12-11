@@ -2,6 +2,7 @@
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:ONE_FINANCE"
+             xmlns:converters="clr-namespace:ONE_FINANCE.Converters"
              x:Class="ONE_FINANCE.App">
     <Application.Resources>
         <ResourceDictionary>
@@ -9,6 +10,12 @@
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Global Converters -->
+            <converters:TransactionTypeToColorConverter x:Key="TransactionTypeToColorConverter"/>
+            <converters:TransactionTypeToSignConverter x:Key="TransactionTypeToSignConverter"/>
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
+            <converters:BoolToTextConverter x:Key="BoolToTextConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

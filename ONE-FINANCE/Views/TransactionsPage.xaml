@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:ONE_FINANCE.ViewModels"
+             xmlns:models="clr-namespace:ONE_FINANCE.Models"
+             x:Class="ONE_FINANCE.Views.TransactionsPage"
+             x:DataType="viewmodels:TransactionsViewModel"
+             Title="{Binding Title}">
+
+    <Grid RowDefinitions="Auto,*" Padding="15">
+        
+        <!-- Header with Add Button -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,15">
+            <Label Text="💳 Transactions" 
+                   FontSize="24" 
+                   FontAttributes="Bold" 
+                   VerticalOptions="Center"/>
+            
+            <Button Grid.Column="1" 
+                    Text="+ Add"
+                    Command="{Binding AddTransactionCommand}"
+                    BackgroundColor="{StaticResource Primary}"
+                    TextColor="White"
+                    CornerRadius="8"
+                    Padding="15,8"/>
+        </Grid>
+
+        <!-- Transactions List -->
+        <RefreshView Grid.Row="1" 
+                     Command="{Binding RefreshCommand}"
+                     IsRefreshing="{Binding IsBusy}">
+            
+            <CollectionView ItemsSource="{Binding Transactions}"
+                            SelectedItem="{Binding SelectedTransaction, Mode=TwoWay}"
+                            SelectionMode="Single"
+                            EmptyView="No transactions yet. Tap '+ Add' to create one!">
+                
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:Transaction">
+                        <SwipeView>
+                            <!-- Swipe to delete -->
+                            <SwipeView.RightItems>
+                                <SwipeItems>
+                                    <SwipeItem Text="Delete"
+                                               BackgroundColor="#E53935"
+                                               Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TransactionsViewModel}}, Path=DeleteTransactionCommand}"
+                                               CommandParameter="{Binding .}"/>
+                                </SwipeItems>
+                            </SwipeView.RightItems>
+
+                            <!-- Transaction Card -->
+                            <Frame Margin="0,5" 
+                                   Padding="15" 
+                                   CornerRadius="10"
+                                   BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                                   BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                    
+                                    <!-- Category Icon -->
+                                    <Frame Grid.Column="0" 
+                                           WidthRequest="44" 
+                                           HeightRequest="44" 
+                                           CornerRadius="22"
+                                           Padding="0"
+                                           BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}"
+                                           BorderColor="Transparent"
+                                           VerticalOptions="Center">
+                                        <Label Text="{Binding Category.Icon, FallbackValue='💰'}"
+                                               FontSize="20"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"/>
+                                    </Frame>
+                                    
+                                    <!-- Description & Category -->
+                                    <VerticalStackLayout Grid.Column="1" 
+                                                         VerticalOptions="Center" 
+                                                         Spacing="2">
+                                        <Label Text="{Binding Description}"
+                                               FontSize="16"
+                                               FontAttributes="Bold"
+                                               LineBreakMode="TailTruncation"/>
+                                        <HorizontalStackLayout Spacing="8">
+                                            <Label Text="{Binding Category.Name, FallbackValue='Uncategorized'}"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource Gray500}"/>
+                                            <Label Text="•"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource Gray500}"/>
+                                            <Label Text="{Binding Date, StringFormat='{0:MMM dd, yyyy}'}"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource Gray500}"/>
+                                        </HorizontalStackLayout>
+                                    </VerticalStackLayout>
+                                    
+                                    <!-- Amount -->
+                                    <Label Grid.Column="2"
+                                           VerticalOptions="Center"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           Text="{Binding Amount, StringFormat='{0:C}'}"
+                                           TextColor="{Binding Type, Converter={StaticResource TransactionTypeToColorConverter}}"/>
+                                </Grid>
+                            </Frame>
+                        </SwipeView>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- Loading Indicator -->
+        <ActivityIndicator Grid.Row="1"
+                           IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"/>
+    </Grid>
+
+</ContentPage>

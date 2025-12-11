@@ -36,4 +36,19 @@ public interface IDatabaseService
     /// Deletes an entity.
     /// </summary>
     Task<int> DeleteAsync<T>(T entity) where T : BaseEntity, new();
+
+    /// <summary>
+    /// Gets all transactions with their Category and Account details loaded.
+    /// </summary>
+    Task<List<Transaction>> GetTransactionsWithDetailsAsync();
+
+    /// <summary>
+    /// Gets categories filtered by transaction type.
+    /// </summary>
+    Task<List<Category>> GetCategoriesByTypeAsync(TransactionType type);
+
+    /// <summary>
+    /// Gets transactions for a specific month.
+    /// </summary>
+    Task<List<Transaction>> GetTransactionsByMonthAsync(int year, int month);
 }

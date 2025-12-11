@@ -27,9 +27,11 @@ public class DatabaseService : IDatabaseService
         // Create tables for all models
         await _database.CreateTableAsync<Transaction>();
         await _database.CreateTableAsync<Category>();
+        await _database.CreateTableAsync<Account>();
 
-        // Seed default categories if needed
+        // Seed default data if needed
         await SeedDefaultCategoriesAsync();
+        await SeedDefaultAccountAsync();
     }
 
     /// <inheritdoc/>
@@ -70,6 +72,91 @@ public class DatabaseService : IDatabaseService
     }
 
     /// <summary>
+    /// Gets transactions with their related Category and Account populated.
+    /// </summary>
+    public async Task<List<Transaction>> GetTransactionsWithDetailsAsync()
+    {
+        await InitializeAsync();
+        
+        var transactions = await _database!.Table<Transaction>()
+            .OrderByDescending(t => t.Date)
+            .ToListAsync();
+        
+        var categories = await _database.Table<Category>().ToListAsync();
+        var accounts = await _database.Table<Account>().ToListAsync();
+        
+        var categoryDict = categories.ToDictionary(c => c.Id);
+        var accountDict = accounts.ToDictionary(a => a.Id);
+        
+        foreach (var transaction in transactions)
+        {
+            if (categoryDict.TryGetValue(transaction.CategoryId, out var category))
+                transaction.Category = category;
+            
+            if (transaction.AccountId.HasValue && accountDict.TryGetValue(transaction.AccountId.Value, out var account))
+                transaction.Account = account;
+        }
+        
+        return transactions;
+    }
+
+    /// <summary>
+    /// Gets transactions filtered by month and year.
+    /// </summary>
+    public async Task<List<Transaction>> GetTransactionsByMonthAsync(int year, int month)
+    {
+        await InitializeAsync();
+        
+        var startDate = new DateTime(year, month, 1);
+        var endDate = startDate.AddMonths(1);
+        
+        var transactions = await _database!.Table<Transaction>()
+            .Where(t => t.Date >= startDate && t.Date < endDate)
+            .OrderByDescending(t => t.Date)
+            .ToListAsync();
+        
+        // Populate navigation properties
+        var categories = await _database.Table<Category>().ToListAsync();
+        var accounts = await _database.Table<Account>().ToListAsync();
+        
+        var categoryDict = categories.ToDictionary(c => c.Id);
+        var accountDict = accounts.ToDictionary(a => a.Id);
+        
+        foreach (var transaction in transactions)
+        {
+            if (categoryDict.TryGetValue(transaction.CategoryId, out var category))
+                transaction.Category = category;
+            
+            if (transaction.AccountId.HasValue && accountDict.TryGetValue(transaction.AccountId.Value, out var account))
+                transaction.Account = account;
+        }
+        
+        return transactions;
+    }
+
+    /// <summary>
+    /// Gets categories filtered by transaction type.
+    /// </summary>
+    public async Task<List<Category>> GetCategoriesByTypeAsync(TransactionType type)
+    {
+        await InitializeAsync();
+        return await _database!.Table<Category>()
+            .Where(c => c.Type == type)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Gets the default account or null if none exists.
+    /// </summary>
+    public async Task<Account?> GetDefaultAccountAsync()
+    {
+        await InitializeAsync();
+        return await _database!.Table<Account>()
+            .FirstOrDefaultAsync(a => a.IsDefault);
+    }
+
+    /// <summary>
     /// Seeds default categories for new installations.
     /// </summary>
     private async Task SeedDefaultCategoriesAsync()
@@ -101,5 +188,27 @@ public class DatabaseService : IDatabaseService
             category.CreatedAt = DateTime.UtcNow;
             await _database.InsertAsync(category);
         }
+    }
+
+    /// <summary>
+    /// Seeds a default "Cash" account for new installations.
+    /// </summary>
+    private async Task SeedDefaultAccountAsync()
+    {
+        var existingAccounts = await _database!.Table<Account>().CountAsync();
+        if (existingAccounts > 0)
+            return;
+
+        var defaultAccount = new Account
+        {
+            Name = "Cash",
+            Type = AccountType.Cash,
+            Icon = "💵",
+            IsDefault = true,
+            Balance = 0,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _database.InsertAsync(defaultAccount);
     }
 }

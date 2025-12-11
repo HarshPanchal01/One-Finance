@@ -14,6 +14,13 @@
             Route="DashboardPage" />
     </FlyoutItem>
 
+    <FlyoutItem Title="Transactions" Icon="{OnPlatform Default=''}">
+        <ShellContent
+            Title="Transactions"
+            ContentTemplate="{DataTemplate views:TransactionsPage}"
+            Route="TransactionsPage" />
+    </FlyoutItem>
+
     <FlyoutItem Title="Settings" Icon="{OnPlatform Default=''}">
         <ShellContent
             Title="Settings"

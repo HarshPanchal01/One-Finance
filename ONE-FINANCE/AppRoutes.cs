@@ -8,12 +8,14 @@ public static class AppRoutes
 {
     // Main Pages (Shell tabs/flyout items)
     public const string Dashboard = "DashboardPage";
+    public const string Transactions = "TransactionsPage";
     public const string Settings = "SettingsPage";
 
-    // Future pages - add routes here as you create them
-    // public const string Transactions = "TransactionsPage";
-    // public const string AddTransaction = "AddTransactionPage";
+    // Detail/Form pages (navigated to programmatically)
+    public const string TransactionForm = "TransactionFormPage";
+    
+    // Future pages
     // public const string Categories = "CategoriesPage";
+    // public const string Accounts = "AccountsPage";
     // public const string Reports = "ReportsPage";
-    // public const string Budget = "BudgetPage";
 }

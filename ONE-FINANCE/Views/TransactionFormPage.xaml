@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:ONE_FINANCE.ViewModels"
+             xmlns:sys="clr-namespace:System;assembly=netstandard"
+             x:Class="ONE_FINANCE.Views.TransactionFormPage"
+             x:DataType="viewmodels:TransactionFormViewModel"
+             Title="{Binding Title}"
+             Shell.PresentationMode="ModalAnimated">
+
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior Command="{Binding CancelCommand}" />
+    </Shell.BackButtonBehavior>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+
+            <!-- Transaction Type Toggle -->
+            <Frame Padding="5" 
+                   CornerRadius="25" 
+                   BorderColor="{StaticResource Gray200}"
+                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}">
+                <Grid ColumnDefinitions="*,*">
+                    <!-- Expense Button -->
+                    <Button Grid.Column="0"
+                            Text="💸 Expense"
+                            Command="{Binding SetExpenseCommand}"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            CornerRadius="20"
+                            Padding="15,10"
+                            BackgroundColor="{Binding IsIncome, Converter={StaticResource InverseBoolConverter}, ConverterParameter=True}"
+                            TextColor="White">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding IsIncome}" Value="False">
+                                <Setter Property="BackgroundColor" Value="#E53935"/>
+                            </DataTrigger>
+                            <DataTrigger TargetType="Button" Binding="{Binding IsIncome}" Value="True">
+                                <Setter Property="BackgroundColor" Value="Transparent"/>
+                                <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                    
+                    <!-- Income Button -->
+                    <Button Grid.Column="1"
+                            Text="💰 Income"
+                            Command="{Binding SetIncomeCommand}"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            CornerRadius="20"
+                            Padding="15,10"
+                            TextColor="White">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding IsIncome}" Value="True">
+                                <Setter Property="BackgroundColor" Value="#43A047"/>
+                            </DataTrigger>
+                            <DataTrigger TargetType="Button" Binding="{Binding IsIncome}" Value="False">
+                                <Setter Property="BackgroundColor" Value="Transparent"/>
+                                <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                </Grid>
+            </Frame>
+
+            <!-- Amount Entry -->
+            <Frame Padding="15" CornerRadius="12" BorderColor="{StaticResource Gray200}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Amount" 
+                           FontSize="12" 
+                           TextColor="{StaticResource Gray500}"
+                           FontAttributes="Bold"/>
+                    <Entry Placeholder="0.00"
+                           Text="{Binding Amount}"
+                           Keyboard="Numeric"
+                           FontSize="28"
+                           FontAttributes="Bold"
+                           TextColor="{Binding SelectedType, Converter={StaticResource TransactionTypeToColorConverter}}"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Description Entry -->
+            <Frame Padding="15" CornerRadius="12" BorderColor="{StaticResource Gray200}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Description" 
+                           FontSize="12" 
+                           TextColor="{StaticResource Gray500}"
+                           FontAttributes="Bold"/>
+                    <Entry Placeholder="What was this for?"
+                           Text="{Binding Description}"
+                           FontSize="16"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Category Picker -->
+            <Frame Padding="15" CornerRadius="12" BorderColor="{StaticResource Gray200}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Category" 
+                           FontSize="12" 
+                           TextColor="{StaticResource Gray500}"
+                           FontAttributes="Bold"/>
+                    <Picker ItemsSource="{Binding Categories}"
+                            SelectedItem="{Binding SelectedCategory}"
+                            ItemDisplayBinding="{Binding DisplayName}"
+                            Title="Select a category"
+                            FontSize="16"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Account Picker -->
+            <Frame Padding="15" CornerRadius="12" BorderColor="{StaticResource Gray200}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Account" 
+                           FontSize="12" 
+                           TextColor="{StaticResource Gray500}"
+                           FontAttributes="Bold"/>
+                    <Picker ItemsSource="{Binding Accounts}"
+                            SelectedItem="{Binding SelectedAccount}"
+                            ItemDisplayBinding="{Binding Name}"
+                            Title="Select an account"
+                            FontSize="16"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Date Picker -->
+            <Frame Padding="15" CornerRadius="12" BorderColor="{StaticResource Gray200}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Date" 
+                           FontSize="12" 
+                           TextColor="{StaticResource Gray500}"
+                           FontAttributes="Bold"/>
+                    <DatePicker Date="{Binding Date}"
+                                FontSize="16"
+                                MaximumDate="{x:Static sys:DateTime.Today}"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Notes Entry (Optional) -->
+            <Frame Padding="15" CornerRadius="12" BorderColor="{StaticResource Gray200}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Notes (Optional)" 
+                           FontSize="12" 
+                           TextColor="{StaticResource Gray500}"
+                           FontAttributes="Bold"/>
+                    <Editor Placeholder="Add any additional notes..."
+                            Text="{Binding Notes}"
+                            FontSize="14"
+                            HeightRequest="80"
+                            AutoSize="TextChanges"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Action Buttons -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,10,0,0">
+                <Button Grid.Column="0"
+                        Text="Cancel"
+                        Command="{Binding CancelCommand}"
+                        BackgroundColor="{StaticResource Gray200}"
+                        TextColor="{StaticResource Gray600}"
+                        CornerRadius="12"
+                        HeightRequest="50"
+                        FontAttributes="Bold"/>
+                
+                <Button Grid.Column="1"
+                        Text="{Binding SaveButtonText}"
+                        Command="{Binding SaveCommand}"
+                        BackgroundColor="{StaticResource Primary}"
+                        TextColor="White"
+                        CornerRadius="12"
+                        HeightRequest="50"
+                        FontAttributes="Bold"/>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

@@ -10,8 +10,6 @@ public partial class AppShell : Shell
 
 		// Register routes for pages that need programmatic navigation
 		// (pages not in the flyout/tab structure)
-		// Example: Routing.RegisterRoute(AppRoutes.AddTransaction, typeof(AddTransactionPage));
-		
 		RegisterRoutes();
 	}
 
@@ -21,8 +19,11 @@ public partial class AppShell : Shell
 	/// </summary>
 	private static void RegisterRoutes()
 	{
-		// Detail/Modal pages that are navigated to programmatically
-		// Routing.RegisterRoute(AppRoutes.AddTransaction, typeof(AddTransactionPage));
+		// Transaction form page for adding/editing transactions
+		Routing.RegisterRoute(AppRoutes.TransactionForm, typeof(TransactionFormPage));
+		
+		// Future routes:
 		// Routing.RegisterRoute(AppRoutes.TransactionDetail, typeof(TransactionDetailPage));
+		// Routing.RegisterRoute(AppRoutes.AccountForm, typeof(AccountFormPage));
 	}
 }
