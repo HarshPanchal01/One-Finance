@@ -99,17 +99,17 @@ public class DatabaseService : IDatabaseService
 
         var categories = new[]
         {
-            new Category { Name = "Salary", Type = TransactionType.Income, Icon = "💼", IsSystem = true },
-            new Category { Name = "Freelance", Type = TransactionType.Income, Icon = "💻", IsSystem = true },
-            new Category { Name = "Other Income", Type = TransactionType.Income, Icon = "💰", IsSystem = true },
-            new Category { Name = "Food & Dining", Type = TransactionType.Expense, Icon = "🍔", IsSystem = true },
-            new Category { Name = "Transportation", Type = TransactionType.Expense, Icon = "🚗", IsSystem = true },
-            new Category { Name = "Shopping", Type = TransactionType.Expense, Icon = "🛒", IsSystem = true },
-            new Category { Name = "Bills & Utilities", Type = TransactionType.Expense, Icon = "📄", IsSystem = true },
-            new Category { Name = "Entertainment", Type = TransactionType.Expense, Icon = "🎬", IsSystem = true },
+            new Category { Name = "Salary", Type = TransactionType.Income, IsSystem = true },
+            new Category { Name = "Freelance", Type = TransactionType.Income, IsSystem = true },
+            new Category { Name = "Other Income", Type = TransactionType.Income, IsSystem = true },
+            new Category { Name = "Food & Dining", Type = TransactionType.Expense, IsSystem = true },
+            new Category { Name = "Transportation", Type = TransactionType.Expense, IsSystem = true },
+            new Category { Name = "Shopping", Type = TransactionType.Expense, IsSystem = true },
+            new Category { Name = "Bills & Utilities", Type = TransactionType.Expense, IsSystem = true },
+            new Category { Name = "Entertainment", Type = TransactionType.Expense, IsSystem = true },
         };
         foreach (var c in categories) await _database.InsertAsync(c);
 
-        await _database.InsertAsync(new Account { Name = "Cash", Type = AccountType.Cash, Icon = "💵", IsDefault = true });
+        await _database.InsertAsync(new Account { Name = "Cash", Type = AccountType.Cash, IsDefault = true });
     }
 }

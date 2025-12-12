@@ -23,7 +23,6 @@
                 <Border DockPanel.Dock="Top" 
                         Padding="20,24,20,20">
                     <StackPanel>
-                        <TextBlock Text="💰" FontSize="32"/>
                         <TextBlock Text="One Finance" 
                                    FontSize="20" 
                                    FontWeight="Bold"
@@ -36,19 +35,13 @@
                     <Button Command="{Binding NavigateToDashboardCommand}"
                             Classes="nav-item"
                             Classes.selected="{Binding IsDashboardSelected}">
-                        <StackPanel Orientation="Horizontal" Spacing="12">
-                            <TextBlock Text="📊" FontSize="18"/>
-                            <TextBlock Text="Dashboard" VerticalAlignment="Center"/>
-                        </StackPanel>
+                        <TextBlock Text="Dashboard" VerticalAlignment="Center"/>
                     </Button>
                     
                     <Button Command="{Binding NavigateToTransactionsCommand}"
                             Classes="nav-item"
                             Classes.selected="{Binding IsTransactionsSelected}">
-                        <StackPanel Orientation="Horizontal" Spacing="12">
-                            <TextBlock Text="💳" FontSize="18"/>
-                            <TextBlock Text="Transactions" VerticalAlignment="Center"/>
-                        </StackPanel>
+                        <TextBlock Text="Transactions" VerticalAlignment="Center"/>
                     </Button>
 
                     <!-- Spacer -->
@@ -59,10 +52,7 @@
                     <Button Command="{Binding NavigateToSettingsCommand}"
                             Classes="nav-item"
                             Classes.selected="{Binding IsSettingsSelected}">
-                        <StackPanel Orientation="Horizontal" Spacing="12">
-                            <TextBlock Text="⚙️" FontSize="18"/>
-                            <TextBlock Text="Settings" VerticalAlignment="Center"/>
-                        </StackPanel>
+                        <TextBlock Text="Settings" VerticalAlignment="Center"/>
                     </Button>
                 </StackPanel>
             </DockPanel>

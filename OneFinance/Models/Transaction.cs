@@ -35,4 +35,10 @@ public class Transaction : BaseEntity
     public string DisplayAmount => Type == TransactionType.Income 
         ? $"+{Amount:C2}" 
         : $"-{Amount:C2}";
+
+    [Ignore]
+    public bool IsIncome => Type == TransactionType.Income;
+
+    [Ignore]
+    public bool HasDescription => !string.IsNullOrWhiteSpace(Description);
 }

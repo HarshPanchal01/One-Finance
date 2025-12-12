@@ -7,26 +7,26 @@
         <StackPanel Margin="24" Spacing="24">
             <TextBlock Text="Dashboard" FontSize="28" FontWeight="Bold"/>
             
-            <StackPanel Orientation="Horizontal" Spacing="16">
-                <Border Background="#0078D4" CornerRadius="8" Padding="20" MinWidth="200">
+            <Grid ColumnDefinitions="*,*,*" HorizontalAlignment="Stretch">
+                <Border Background="#0078D4" CornerRadius="8" Padding="20" Margin="0,0,8,0">
                     <StackPanel>
                         <TextBlock Text="Balance" Foreground="White" Opacity="0.8"/>
                         <TextBlock Text="{Binding Balance, StringFormat=C2}" FontSize="28" FontWeight="Bold" Foreground="White"/>
                     </StackPanel>
                 </Border>
-                <Border Background="#22C55E" CornerRadius="8" Padding="20" MinWidth="200">
+                <Border Grid.Column="1" Background="#22C55E" CornerRadius="8" Padding="20" Margin="8,0">
                     <StackPanel>
                         <TextBlock Text="Income" Foreground="White" Opacity="0.8"/>
                         <TextBlock Text="{Binding TotalIncome, StringFormat=C2}" FontSize="28" FontWeight="Bold" Foreground="White"/>
                     </StackPanel>
                 </Border>
-                <Border Background="#EF4444" CornerRadius="8" Padding="20" MinWidth="200">
+                <Border Grid.Column="2" Background="#EF4444" CornerRadius="8" Padding="20" Margin="8,0,0,0">
                     <StackPanel>
                         <TextBlock Text="Expenses" Foreground="White" Opacity="0.8"/>
                         <TextBlock Text="{Binding TotalExpenses, StringFormat=C2}" FontSize="28" FontWeight="Bold" Foreground="White"/>
                     </StackPanel>
                 </Border>
-            </StackPanel>
+            </Grid>
 
             <Border Background="#2D2D2D" CornerRadius="8" Padding="20">
                 <StackPanel Spacing="12">
@@ -34,14 +34,24 @@
                     <ItemsControl ItemsSource="{Binding RecentTransactions}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Padding="12" Margin="0,4" Background="#3D3D3D" CornerRadius="4">
-                                    <Grid ColumnDefinitions="Auto,*,Auto">
-                                        <TextBlock Text="{Binding Category.Icon}" FontSize="20" Margin="0,0,12,0"/>
-                                        <StackPanel Grid.Column="1">
-                                            <TextBlock Text="{Binding Description}" FontWeight="Medium"/>
-                                            <TextBlock Text="{Binding Date, StringFormat='{}{0:MMM dd}'}" Opacity="0.6" FontSize="12"/>
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="2" Text="{Binding DisplayAmount}" FontWeight="SemiBold"/>
+                                <Border Margin="0,4" CornerRadius="4" ClipToBounds="True">
+                                    <Grid ColumnDefinitions="4,*">
+                                        <!-- Color indicator bar -->
+                                        <Panel Grid.Column="0">
+                                            <Border Background="#22C55E" IsVisible="{Binding IsIncome}"/>
+                                            <Border Background="#EF4444" IsVisible="{Binding !IsIncome}"/>
+                                        </Panel>
+                                        <!-- Content -->
+                                        <Border Grid.Column="1" Background="#3D3D3D" Padding="12">
+                                            <Grid ColumnDefinitions="120,*,Auto">
+                                                <StackPanel VerticalAlignment="Center" Width="120">
+                                                    <TextBlock Text="{Binding Category.Name}" FontWeight="Medium"/>
+                                                    <TextBlock Text="{Binding Date, StringFormat='{}{0:MMM dd}'}" Opacity="0.6" FontSize="12"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="{Binding Description}" TextTrimming="CharacterEllipsis" Opacity="0.7" VerticalAlignment="Center" Margin="16,0" IsVisible="{Binding HasDescription}"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding DisplayAmount}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
                                     </Grid>
                                 </Border>
                             </DataTemplate>

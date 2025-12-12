@@ -3,48 +3,90 @@
              xmlns:vm="using:OneFinance.ViewModels"
              x:Class="OneFinance.Views.TransactionsView"
              x:DataType="vm:TransactionsViewModel">
-    <Grid RowDefinitions="Auto,Auto,*">
-        <Grid Margin="24,24,24,0" ColumnDefinitions="*,Auto">
+    <Grid RowDefinitions="Auto,*">
+        <Grid Margin="24,24,24,16" ColumnDefinitions="*,Auto">
             <TextBlock Text="Transactions" FontSize="28" FontWeight="Bold"/>
             <Button Grid.Column="1" Content="+ Add" Command="{Binding AddTransactionCommand}" Background="#0078D4" Foreground="White"/>
         </Grid>
 
-        <Border Grid.Row="1" Margin="24,16" Padding="16" Background="#2D2D2D" CornerRadius="8">
-            <Grid ColumnDefinitions="*,*">
-                <StackPanel HorizontalAlignment="Center">
-                    <TextBlock Text="Income" Opacity="0.7" HorizontalAlignment="Center"/>
-                    <TextBlock Text="{Binding TotalIncome, StringFormat=C2}" FontSize="20" Foreground="#22C55E" HorizontalAlignment="Center"/>
+        <ScrollViewer Grid.Row="1" Margin="24,0,24,24">
+            <Grid ColumnDefinitions="*,16,*">
+                <!-- Income Column -->
+                <StackPanel Grid.Column="0" Spacing="8">
+                    <Border Background="#2D2D2D" CornerRadius="8" Padding="16">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Income" Opacity="0.7" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding TotalIncome, StringFormat=C2}" FontSize="24" Foreground="#22C55E" HorizontalAlignment="Center" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding IncomeTransactions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,4" CornerRadius="4" ClipToBounds="True">
+                                    <Grid ColumnDefinitions="4,*">
+                                        <Border Grid.Column="0" Background="#22C55E"/>
+                                        <Border Grid.Column="1" Background="#2D2D2D" Padding="12">
+                                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Category.Name}" FontWeight="Medium"/>
+                                                    <TextBlock Text="{Binding Date, StringFormat='{}{0:MMM dd, yyyy}'}" Opacity="0.6" FontSize="12"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayAmount}" FontWeight="Bold" Foreground="#22C55E" VerticalAlignment="Center" Margin="8,0"/>
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                                                    <Button Command="{Binding $parent[ItemsControl].((vm:TransactionsViewModel)DataContext).EditTransactionCommand}" CommandParameter="{Binding}" Background="Transparent" Padding="6" ToolTip.Tip="Edit">
+                                                        <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" Width="14" Height="14"/>
+                                                    </Button>
+                                                    <Button Command="{Binding $parent[ItemsControl].((vm:TransactionsViewModel)DataContext).DeleteTransactionCommand}" CommandParameter="{Binding}" Background="Transparent" Padding="6" ToolTip.Tip="Delete">
+                                                        <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" Width="14" Height="14" Foreground="#EF4444"/>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
-                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                    <TextBlock Text="Expenses" Opacity="0.7" HorizontalAlignment="Center"/>
-                    <TextBlock Text="{Binding TotalExpenses, StringFormat=C2}" FontSize="20" Foreground="#EF4444" HorizontalAlignment="Center"/>
+
+                <!-- Expense Column -->
+                <StackPanel Grid.Column="2" Spacing="8">
+                    <Border Background="#2D2D2D" CornerRadius="8" Padding="16">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Expenses" Opacity="0.7" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding TotalExpenses, StringFormat=C2}" FontSize="24" Foreground="#EF4444" HorizontalAlignment="Center" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding ExpenseTransactions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,4" CornerRadius="4" ClipToBounds="True">
+                                    <Grid ColumnDefinitions="4,*">
+                                        <Border Grid.Column="0" Background="#EF4444"/>
+                                        <Border Grid.Column="1" Background="#2D2D2D" Padding="12">
+                                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Category.Name}" FontWeight="Medium"/>
+                                                    <TextBlock Text="{Binding Date, StringFormat='{}{0:MMM dd, yyyy}'}" Opacity="0.6" FontSize="12"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayAmount}" FontWeight="Bold" Foreground="#EF4444" VerticalAlignment="Center" Margin="8,0"/>
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                                                    <Button Command="{Binding $parent[ItemsControl].((vm:TransactionsViewModel)DataContext).EditTransactionCommand}" CommandParameter="{Binding}" Background="Transparent" Padding="6" ToolTip.Tip="Edit">
+                                                        <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" Width="14" Height="14"/>
+                                                    </Button>
+                                                    <Button Command="{Binding $parent[ItemsControl].((vm:TransactionsViewModel)DataContext).DeleteTransactionCommand}" CommandParameter="{Binding}" Background="Transparent" Padding="6" ToolTip.Tip="Delete">
+                                                        <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" Width="14" Height="14" Foreground="#EF4444"/>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </Grid>
-        </Border>
-
-        <ScrollViewer Grid.Row="2" Margin="24,0,24,24">
-            <ItemsControl ItemsSource="{Binding Transactions}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Padding="16" Margin="0,4" Background="#2D2D2D" CornerRadius="8">
-                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                <Border Width="40" Height="40" CornerRadius="20" Background="#3D3D3D" Margin="0,0,12,0">
-                                    <TextBlock Text="{Binding Category.Icon}" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Description}" FontWeight="Medium"/>
-                                    <TextBlock Text="{Binding Date, StringFormat='{}{0:MMM dd, yyyy}'}" Opacity="0.6" FontSize="12"/>
-                                </StackPanel>
-                                <TextBlock Grid.Column="2" Text="{Binding DisplayAmount}" FontWeight="Bold" VerticalAlignment="Center" Margin="12,0"/>
-                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4">
-                                    <Button Content="✏️" Command="{Binding $parent[ItemsControl].((vm:TransactionsViewModel)DataContext).EditTransactionCommand}" CommandParameter="{Binding}" Background="Transparent"/>
-                                    <Button Content="🗑️" Command="{Binding $parent[ItemsControl].((vm:TransactionsViewModel)DataContext).DeleteTransactionCommand}" CommandParameter="{Binding}" Background="Transparent"/>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
         </ScrollViewer>
     </Grid>
 </UserControl>
