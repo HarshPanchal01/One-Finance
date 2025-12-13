@@ -41,11 +41,12 @@ public partial class App : Application
         // Services
         services.AddSingleton<IDatabaseService, DatabaseService>();
         services.AddSingleton<INavigationService, NavigationService>();
+        services.AddSingleton<ILedgerPeriodContext, LedgerPeriodContext>();
 
         // ViewModels
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient<DashboardViewModel>();
-        services.AddTransient<TransactionsViewModel>();
+        services.AddSingleton<TransactionsViewModel>();
         services.AddTransient<TransactionFormViewModel>();
         services.AddTransient<SettingsViewModel>();
 
