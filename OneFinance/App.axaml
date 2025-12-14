@@ -35,5 +35,13 @@
         <Style Selector="Button.nav-item:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#2D2D2D"/>
         </Style>
+
+        <Style Selector="Button.nav-item.selected TextBlock">
+            <Setter Property="TextDecorations" Value="Underline"/>
+        </Style>
+
+        <Style Selector="Button.nav-item.period-selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2D2D2D"/>
+        </Style>
     </Application.Styles>
 </Application>

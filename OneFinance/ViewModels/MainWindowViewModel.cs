@@ -30,6 +30,8 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _isDeleteYearConfirmationVisible;
     [ObservableProperty] private YearNode? _yearToDelete;
 
+    private MonthNode? _selectedMonthNode;
+
     public MainWindowViewModel(
         INavigationService navigationService,
         IDatabaseService databaseService,
@@ -60,7 +62,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private void OnNavigationChanged(string viewName)
     {
         IsDashboardSelected = viewName == "Dashboard";
-        IsTransactionsSelected = viewName is "Transactions" or "TransactionForm";
+        IsTransactionsSelected = (viewName is "Transactions" or "TransactionForm") && !_periodContext.SelectedPeriod.HasValue;
         IsSettingsSelected = viewName == "Settings";
 
         CurrentViewModel = viewName switch
@@ -82,6 +84,13 @@ public partial class MainWindowViewModel : ViewModelBase
         _periodContext.Clear();
         PeriodStatus = _periodContext.GetLabel();
         SelectedTreeNode = null;
+
+        if (_selectedMonthNode is not null)
+        {
+            _selectedMonthNode.IsSelected = false;
+            _selectedMonthNode = null;
+        }
+
         _navigationService.NavigateTo("Transactions");
     }
 
@@ -162,9 +171,17 @@ public partial class MainWindowViewModel : ViewModelBase
 
     partial void OnSelectedTreeNodeChanged(object? value)
     {
+        if (_selectedMonthNode is not null)
+        {
+            _selectedMonthNode.IsSelected = false;
+            _selectedMonthNode = null;
+        }
+
         switch (value)
         {
             case MonthNode monthNode:
+                _selectedMonthNode = monthNode;
+                _selectedMonthNode.IsSelected = true;
                 _periodContext.SetSelectedPeriod(monthNode.Year, monthNode.Month);
                 PeriodStatus = _periodContext.GetLabel();
                 _navigationService.NavigateTo("Transactions");

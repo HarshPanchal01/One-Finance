@@ -39,6 +39,9 @@ public partial class MonthNode : ObservableObject
     [ObservableProperty]
     private bool _isExpanded;
 
+    [ObservableProperty]
+    private bool _isSelected;
+
     public string Name => new DateTime(Year, Month, 1).ToString("MMM");
     public string FullName => new DateTime(Year, Month, 1).ToString("MMMM");
 }
