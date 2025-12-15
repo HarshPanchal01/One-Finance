@@ -46,12 +46,14 @@ public partial class App : Application
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<TransactionsViewModel>();
+        services.AddTransient<AccountsViewModel>();
         services.AddTransient<TransactionFormViewModel>();
         services.AddTransient<SettingsViewModel>();
 
         // ViewModel Factories for MainWindowViewModel
         services.AddSingleton<Func<DashboardViewModel>>(sp => () => sp.GetRequiredService<DashboardViewModel>());
         services.AddSingleton<Func<TransactionsViewModel>>(sp => () => sp.GetRequiredService<TransactionsViewModel>());
+        services.AddSingleton<Func<AccountsViewModel>>(sp => () => sp.GetRequiredService<AccountsViewModel>());
         services.AddSingleton<Func<TransactionFormViewModel>>(sp => () => sp.GetRequiredService<TransactionFormViewModel>());
         services.AddSingleton<Func<SettingsViewModel>>(sp => () => sp.GetRequiredService<SettingsViewModel>());
     }

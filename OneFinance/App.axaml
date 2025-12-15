@@ -13,6 +13,9 @@
         <DataTemplate DataType="vm:TransactionsViewModel">
             <views:TransactionsView/>
         </DataTemplate>
+		<DataTemplate DataType="vm:AccountsViewModel">
+			<views:AccountsView/>
+		</DataTemplate>
         <DataTemplate DataType="vm:TransactionFormViewModel">
             <views:TransactionFormView/>
         </DataTemplate>

@@ -37,6 +37,12 @@
                             Classes.selected="{Binding IsDashboardSelected}">
                         <TextBlock Text="Dashboard" VerticalAlignment="Center"/>
                     </Button>
+
+					<Button Command="{Binding NavigateToAccountsCommand}"
+                            Classes="nav-item"
+                            Classes.selected="{Binding IsAccountsSelected}">
+						<TextBlock Text="Accounts" VerticalAlignment="Center"/>
+					</Button>
                     
                     <Button Command="{Binding NavigateToTransactionsCommand}"
                             Classes="nav-item"
@@ -65,6 +71,9 @@
                     <DataTemplate DataType="vm:DashboardViewModel">
                         <views:DashboardView/>
                     </DataTemplate>
+					<DataTemplate DataType="vm:AccountsViewModel">
+						<views:AccountsView/>
+					</DataTemplate>
                     <DataTemplate DataType="vm:TransactionsViewModel">
                         <views:TransactionsView/>
                     </DataTemplate>
