@@ -1,8 +1,45 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="OneFinance.Views.AccountsView">
-  Welcome to Avalonia!
-</UserControl>
+<UserControl
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:OneFinance.ViewModels"
+    x:Class="OneFinance.Views.AccountsView"
+	x:DataType="vm:AccountsViewModel">
+
+	<!-- UI goes here -->
+	
+	<Grid RowDefinitions="*,*" ColumnDefinitions="*,*" Margin="24">
+        <TextBlock
+                Grid.Row="0"
+                Grid.Column="0"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Text="Accounts"
+                FontSize="28"
+                FontWeight="Bold"
+                Foreground="White"/>
+        <Button Grid.Row="0" 
+                Grid.Column="1"  
+                VerticalAlignment="Top"
+                HorizontalAlignment="Right"
+                Background="#0078D4"
+                
+                >+ Add Account</Button>
+
+        <ListBox ItemsSource="{Binding Accounts}"
+                 Grid.Row="1"
+                 Grid.Column="0"
+                 VerticalAlignment="Center"
+                 HorizontalAlignment="Center"
+                 >
+                  
+        
+            <ListBox.ItemTemplate>
+			    <DataTemplate>
+                    <TextBlock Text="{Binding Name}"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        
+        </ListBox>
+    </Grid>
+
+</UserControl> 
