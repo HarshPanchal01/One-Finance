@@ -24,7 +24,7 @@
                     <TextBlock Text="Storage" FontSize="18" FontWeight="SemiBold"/>
                     <TextBlock Text="Database Location" Opacity="0.7"/>
                     <TextBox Text="{Binding DatabaseLocation}" IsReadOnly="True" FontSize="11"/>
-                    <Button Content="Open Folder" Command="{Binding OpenDatabaseFolderCommand}" HorizontalAlignment="Left"/>
+                    <Button Content="Open Folder" Command="{Binding OpenDatabaseFolderCommand}" HorizontalAlignment="Left" Background="#0078D4" Foreground="White"/>
                 </StackPanel>
             </Border>
         </StackPanel>

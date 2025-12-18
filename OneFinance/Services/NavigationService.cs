@@ -12,6 +12,13 @@ public class NavigationService : INavigationService
 
     public void NavigateTo(string viewName, object? parameter = null)
     {
+        if (viewName == _currentView)
+        {
+            _currentParameter = parameter;
+            NavigationChanged?.Invoke(viewName);
+            return;
+        }
+
         if (!string.IsNullOrEmpty(_currentView))
             _navigationStack.Push((_currentView, _currentParameter));
 

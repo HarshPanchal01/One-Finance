@@ -51,8 +51,8 @@ artifacts/
 # Rider
 .idea/
 
-# VS Code (uncomment if you want to ignore)
-# .vscode/
+# VS Code
+.vscode/
 
 ## OS files
 # macOS
