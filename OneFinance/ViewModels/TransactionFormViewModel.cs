@@ -88,9 +88,26 @@ public partial class TransactionFormViewModel : ViewModelBase
                 CategoryId = SelectedCategory.Id,
                 AccountId = SelectedAccount?.Id
             };
-            if (IsEditMode) await _databaseService.UpdateAsync(t);
-            else await _databaseService.InsertAsync(t);
-            _navigationService.GoBack();
+            if (IsEditMode)
+            {
+                if (_editingId != null && SelectedAccount != null)
+                {
+                    var result = await _databaseService.GetTransactionByIdAsync((int)_editingId);
+                    if (result != null)
+                    {
+                        decimal oldbalanceChange = result.Amount;
+                        decimal newBalanceChange = Amount - oldbalanceChange;
+
+                        await _databaseService.UpdateAccountBalanceById(SelectedAccount.Id, newBalanceChange, SelectedType == TransactionType.Income ? true : false);
+                    }
+                    await _databaseService.UpdateAsync(t);
+                    _navigationService.GoBack();
+                    return;
+                }
+                if (SelectedAccount != null && !IsEditMode) await _databaseService.UpdateAccountBalanceById(SelectedAccount.Id, Amount, SelectedType == TransactionType.Income ? true : false);
+                else await _databaseService.InsertAsync(t);
+                _navigationService.GoBack();
+            }
         });
     }
 

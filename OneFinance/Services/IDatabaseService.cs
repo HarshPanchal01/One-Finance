@@ -13,4 +13,15 @@ public interface IDatabaseService
     Task<List<Transaction>> GetTransactionsWithDetailsAsync();
     Task<List<Transaction>> GetTransactionsByMonthAsync(int year, int month);
     Task<List<Category>> GetCategoriesByTypeAsync(TransactionType type);
+    Task<List<Account>> GetAccountsAsync();
+
+    Task<Account> GetAccountByIdAsync(int id);
+
+    Task RemoveCurrentDefaultAccountAsync();
+
+    Task DeleteAccountByIdAsync(int id);
+
+    Task UpdateAccountBalanceById(int id, decimal amount, bool income);
+
+    Task<Transaction?> GetTransactionByIdAsync(int id);
 }

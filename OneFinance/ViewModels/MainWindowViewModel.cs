@@ -10,6 +10,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly Func<DashboardViewModel> _dashboardFactory;
     private readonly Func<TransactionsViewModel> _transactionsFactory;
     private readonly Func<AccountsViewModel> _accountsFactory;
+    private readonly Func<AccountsFormViewModel> _accountsFormFactory;
     private readonly Func<TransactionFormViewModel> _transactionFormFactory;
     private readonly Func<SettingsViewModel> _settingsFactory;
 
@@ -24,6 +25,7 @@ public partial class MainWindowViewModel : ViewModelBase
         Func<DashboardViewModel> dashboardFactory,
         Func<TransactionsViewModel> transactionsFactory,
         Func<AccountsViewModel> accountsFactory,
+        Func<AccountsFormViewModel> accountsFormFactory,
         Func<TransactionFormViewModel> transactionFormFactory,
         Func<SettingsViewModel> settingsFactory)
     {
@@ -31,6 +33,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _dashboardFactory = dashboardFactory;
         _transactionsFactory = transactionsFactory;
         _accountsFactory = accountsFactory;
+        _accountsFormFactory = accountsFormFactory;
         _transactionFormFactory = transactionFormFactory;
         _settingsFactory = settingsFactory;
 
@@ -55,6 +58,7 @@ public partial class MainWindowViewModel : ViewModelBase
             "Transactions" => _transactionsFactory(),
             "TransactionForm" => _transactionFormFactory(),
             "Accounts" =>  _accountsFactory(),
+            "AccountForm" => _accountsFormFactory(),
             "Settings" => _settingsFactory(),
             _ => CurrentViewModel
         };

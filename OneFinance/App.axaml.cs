@@ -47,6 +47,7 @@ public partial class App : Application
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<TransactionsViewModel>();
         services.AddTransient<AccountsViewModel>();
+        services.AddTransient<AccountsFormViewModel>();
         services.AddTransient<TransactionFormViewModel>();
         services.AddTransient<SettingsViewModel>();
 
@@ -54,6 +55,7 @@ public partial class App : Application
         services.AddSingleton<Func<DashboardViewModel>>(sp => () => sp.GetRequiredService<DashboardViewModel>());
         services.AddSingleton<Func<TransactionsViewModel>>(sp => () => sp.GetRequiredService<TransactionsViewModel>());
         services.AddSingleton<Func<AccountsViewModel>>(sp => () => sp.GetRequiredService<AccountsViewModel>());
+        services.AddSingleton<Func<AccountsFormViewModel>>(sp => () => sp.GetRequiredService<AccountsFormViewModel>());
         services.AddSingleton<Func<TransactionFormViewModel>>(sp => () => sp.GetRequiredService<TransactionFormViewModel>());
         services.AddSingleton<Func<SettingsViewModel>>(sp => () => sp.GetRequiredService<SettingsViewModel>());
     }

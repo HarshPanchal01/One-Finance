@@ -2,44 +2,72 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vm="using:OneFinance.ViewModels"
+    xmlns:models="using:OneFinance.Models"
     x:Class="OneFinance.Views.AccountsView"
-	x:DataType="vm:AccountsViewModel">
+    x:DataType="vm:AccountsViewModel">
 
-	<!-- UI goes here -->
-	
-	<Grid RowDefinitions="*,*" ColumnDefinitions="*,*" Margin="24">
-        <TextBlock
-                Grid.Row="0"
-                Grid.Column="0"
-                VerticalAlignment="Top"
-                HorizontalAlignment="Left"
-                Text="Accounts"
-                FontSize="28"
-                FontWeight="Bold"
-                Foreground="White"/>
-        <Button Grid.Row="0" 
-                Grid.Column="1"  
-                VerticalAlignment="Top"
-                HorizontalAlignment="Right"
-                Background="#0078D4"
-                
-                >+ Add Account</Button>
+    <Grid RowDefinitions="Auto,*" Margin="24">
 
-        <ListBox ItemsSource="{Binding Accounts}"
-                 Grid.Row="1"
-                 Grid.Column="0"
-                 VerticalAlignment="Center"
-                 HorizontalAlignment="Center"
-                 >
-                  
-        
-            <ListBox.ItemTemplate>
-			    <DataTemplate>
-                    <TextBlock Text="{Binding Name}"/>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        
-        </ListBox>
+        <!-- Header -->
+        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+            <TextBlock Text="{Binding Title}" FontSize="28" FontWeight="Bold" VerticalAlignment="Center"/>
+            <Button Grid.Column="1"
+                    Content="+ Add Account"
+                    Command="{Binding AddAccountCommand}"
+                    Background="#0078D4"
+                    Foreground="White"
+                    Padding="12,6"/>
+        </Grid>
+
+        <!-- Accounts List -->
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="12">
+                <ItemsControl ItemsSource="{Binding Accounts}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#2D2D2D"
+                                    CornerRadius="8"
+                                    Padding="16"
+                                    Margin="4"
+                                    ClipToBounds="True">
+                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+                                    <!-- Account Info -->
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Type}" Opacity="0.7"/>
+                                        <TextBlock Text="{Binding Balance, StringFormat=C2}" FontWeight="Bold" 
+                                                   />
+                                        <TextBlock Text="Default Account"
+                                                   IsVisible="{Binding IsDefault}"
+                                                   Foreground="#22C55E"
+                                                   FontSize="12"/>
+                                    </StackPanel>
+
+                                    <!-- Edit Button -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                        <Button Command="{Binding $parent[ScrollViewer].((vm:AccountsViewModel)DataContext).EditAccountCommand}"
+                                                CommandParameter="{Binding}"
+                                                Background="Transparent"
+                                                Padding="6"
+                                                ToolTip.Tip="Edit">
+                                            <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                                      Width="14" Height="14"/>
+                                        </Button>
+                                        <Button Command="{Binding $parent[ScrollViewer].((vm:AccountsViewModel)DataContext).DeleteAccountCommand}"
+                                                CommandParameter="{Binding}"
+                                                Background="Transparent"
+                                                Padding="6"
+                                                ToolTip.Tip="Delete">
+                                            <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                      Width="14" Height="14" Foreground="#EF4444"/>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
-
-</UserControl> 
+</UserControl>

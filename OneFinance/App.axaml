@@ -22,6 +22,9 @@
         <DataTemplate DataType="vm:SettingsViewModel">
             <views:SettingsView/>
         </DataTemplate>
+        <DataTemplate DataType="vm:AccountsFormViewModel">
+			<views:AccountsFormView/>
+		</DataTemplate>
     </Application.DataTemplates>
 
     <Application.Styles>

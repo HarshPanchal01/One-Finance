@@ -52,17 +52,22 @@ public partial class TransactionsViewModel : ViewModelBase
         if (t == null) return;
         await _databaseService.DeleteAsync(t);
         Transactions.Remove(t);
-        
+
         // Remove from filtered collection and recalculate totals
         if (t.Type == TransactionType.Income)
         {
             IncomeTransactions.Remove(t);
             TotalIncome -= t.Amount;
+
+            if (t.AccountId != null) await _databaseService.UpdateAccountBalanceById((int)t.AccountId, t.Amount, false);
+            
         }
         else
         {
             ExpenseTransactions.Remove(t);
             TotalExpenses -= t.Amount;
+
+            if (t.AccountId != null) await _databaseService.UpdateAccountBalanceById((int)t.AccountId, t.Amount, true);
         }
     }
 }

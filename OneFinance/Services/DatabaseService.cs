@@ -112,4 +112,62 @@ public class DatabaseService : IDatabaseService
 
         await _database.InsertAsync(new Account { Name = "Cash", Type = AccountType.Cash, IsDefault = true });
     }
+
+    public async Task<List<Account>> GetAccountsAsync()
+    {
+        await InitializeAsync();
+        return await _database!.Table<Account>().ToListAsync();
+    }
+
+    public async Task<Account> GetAccountByIdAsync(int id)
+    {
+        await InitializeAsync();
+        return await _database!.FindAsync<Account>(id);
+    }
+
+    public async Task RemoveCurrentDefaultAccountAsync()
+    {
+        await InitializeAsync();
+        var result = await _database!.Table<Account>().Where((t) => t.IsDefault).FirstOrDefaultAsync();
+        if (result != null)
+        {
+            result.IsDefault = false;
+            await _database!.UpdateAsync(result);
+        }
+
+        return;
+    }
+
+    public async Task DeleteAccountByIdAsync(int id)
+    {
+        await InitializeAsync();
+        await _database!.DeleteAsync<Account>(id);
+        return;
+    }
+
+    public async Task UpdateAccountBalanceById(int id, decimal amount, bool income)
+    {
+        await InitializeAsync();
+        var result = await _database!.FindAsync<Account>(id);
+        if (result != null)
+        {
+            if (!income) amount *= -1;
+            result.Balance += amount;
+            await _database!.UpdateAsync(result);
+        }
+    }
+
+    public async Task<Transaction?> GetTransactionByIdAsync(int id)
+    {
+        await InitializeAsync();
+        var result = await _database!.FindAsync<Transaction>(id);
+        if (result != null)
+        {
+            return result;
+        }
+        else
+        {
+            return null;
+        }
+    }
 }
