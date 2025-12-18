@@ -67,27 +67,41 @@ public partial class TransactionsViewModel : ViewModelBase
     private void PromptDeleteTransaction(Transaction? t)
     {
         if (t == null) return;
-        await _databaseService.DeleteAsync(t);
-        Transactions.Remove(t);
+        TransactionToDelete = t;
+        IsDeleteConfirmationVisible = true;
+    }
 
+    [RelayCommand]
+    private void CancelDeleteTransaction()
+    {
+        TransactionToDelete = null;
+        IsDeleteConfirmationVisible = false;
+    }
+
+    [RelayCommand]
+    private async Task ConfirmDeleteTransactionAsync()
+    {
+        if (TransactionToDelete == null) return;
+        
+        await _databaseService.DeleteAsync(TransactionToDelete);
+        Transactions.Remove(TransactionToDelete);
+        
         // Remove from filtered collection and recalculate totals
         if (TransactionToDelete.Type == TransactionType.Income)
         {
-            IncomeTransactions.Remove(t);
-            TotalIncome -= t.Amount;
-
-            if (t.AccountId != null) await _databaseService.UpdateAccountBalanceById((int)t.AccountId, t.Amount, false);
-            
+            IncomeTransactions.Remove(TransactionToDelete);
+            TotalIncome -= TransactionToDelete.Amount;
+            if (TransactionToDelete.AccountId != null) await _databaseService.UpdateAccountBalanceById((int)TransactionToDelete.AccountId, TransactionToDelete.Amount, false);
         }
         else
         {
-            ExpenseTransactions.Remove(t);
-            TotalExpenses -= t.Amount;
-
-            if (t.AccountId != null) await _databaseService.UpdateAccountBalanceById((int)t.AccountId, t.Amount, true);
+            ExpenseTransactions.Remove(TransactionToDelete);
+            TotalExpenses -= TransactionToDelete.Amount;
+            if (TransactionToDelete.AccountId != null) await _databaseService.UpdateAccountBalanceById((int)TransactionToDelete.AccountId, TransactionToDelete.Amount, true);
         }
 
         TransactionToDelete = null;
         IsDeleteConfirmationVisible = false;
     }
+
 }

@@ -263,6 +263,7 @@ public class DatabaseService : IDatabaseService
         {
             return null;
         }
+    }
     private async Task EnsureDefaultPeriodAsync()
     {
         if (await _database!.Table<LedgerPeriod>().CountAsync() > 0) return;

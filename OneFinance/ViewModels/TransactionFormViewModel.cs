@@ -104,10 +104,14 @@ public partial class TransactionFormViewModel : ViewModelBase
                     _navigationService.GoBack();
                     return;
                 }
-                if (SelectedAccount != null && !IsEditMode) await _databaseService.UpdateAccountBalanceById(SelectedAccount.Id, Amount, SelectedType == TransactionType.Income ? true : false);
-                else await _databaseService.InsertAsync(t);
-                _navigationService.GoBack();
+                
             }
+            if (SelectedAccount != null && !IsEditMode) await _databaseService.UpdateAccountBalanceById(SelectedAccount.Id, Amount, SelectedType == TransactionType.Income ? true : false);
+            
+            await _databaseService.InsertAsync(t);
+            _navigationService.GoBack();
+
+            
         });
     }
 
