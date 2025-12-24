@@ -66,3 +66,28 @@ Desktop.ini
 
 # Linux
 *~
+
+## Node/Electron/Vite
+node_modules/
+dist/
+dist-ssr/
+dist-electron/
+release/
+out/
+.vite/
+.cache/
+.eslintcache
+*.tsbuildinfo
+
+## Electron builder
+*.AppImage
+*.dmg
+*.exe
+*.msi
+*.zip
+
+## Local DB files (just in case)
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
