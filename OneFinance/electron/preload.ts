@@ -17,12 +17,16 @@ async function invokeOrThrow<T>(
 contextBridge.exposeInMainWorld("oneFinance", {
   app: {
     getPaths: () => invokeOrThrow("app:getPaths"),
+    getInfo: () => invokeOrThrow("app:getInfo"),
+    openDbFolder: () => invokeOrThrow("app:openDbFolder"),
+    deleteDb: () => invokeOrThrow("app:deleteDb"),
   },
   ledger: {
     listTree: () => invokeOrThrow("ledger:listTree"),
     createYear: (year: number) => invokeOrThrow("ledger:createYear", year),
     createMonth: (year: number, month: number) =>
       invokeOrThrow("ledger:createMonth", year, month),
+    deleteYear: (year: number) => invokeOrThrow("ledger:deleteYear", year),
   },
   categories: {
     list: () => invokeOrThrow("categories:list"),
@@ -42,6 +46,8 @@ contextBridge.exposeInMainWorld("oneFinance", {
   transactions: {
     list: (ledgerPeriodId: number) =>
       invokeOrThrow("transactions:list", ledgerPeriodId),
+    summary: () => invokeOrThrow("transactions:summary"),
+    recent: (limit?: number) => invokeOrThrow("transactions:recent", limit),
     create: (input: {
       ledgerPeriodId: number;
       title: string;

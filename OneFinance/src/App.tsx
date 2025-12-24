@@ -4,11 +4,14 @@ import type {
   Category,
   LedgerPeriod,
   LedgerYearNode,
+  RecentTransaction,
+  Summary,
   Transaction,
 } from "./types";
 import { Sidebar } from "./components/Sidebar";
 import { TransactionsView } from "./components/TransactionsView";
-import { CategoriesManager } from "./components/CategoriesManager";
+import { SettingsView, type AppInfo } from "./components/SettingsView";
+import { DashboardView } from "./components/DashboardView";
 import { oneFinanceApi } from "./services/oneFinance";
 
 const EXPANDED_YEARS_KEY = "onefinance.sidebar.expandedYears";
@@ -31,18 +34,23 @@ function saveExpandedYears(value: Record<number, boolean>) {
 }
 
 function App() {
+  const [view, setView] = useState<"dashboard" | "ledger" | "settings">(
+    "dashboard"
+  );
   const [tree, setTree] = useState<LedgerYearNode[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState<LedgerPeriod | null>(
     null
   );
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [recent, setRecent] = useState<RecentTransaction[]>([]);
   const [expandedYears, setExpandedYears] = useState<Record<number, boolean>>(
     () => loadExpandedYears()
   );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [dbFilePath, setDbFilePath] = useState<string | null>(null);
+  const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
 
   const selectedPeriodId = selectedPeriod?.id ?? null;
 
@@ -56,6 +64,7 @@ function App() {
         t.flatMap((y) => y.months).find((m) => m.id === selectPeriodId) ?? null;
       if (found) setSelectedPeriod(found);
     }
+    return t;
   }
 
   async function refreshCategories() {
@@ -68,17 +77,27 @@ function App() {
     setTransactions(rows);
   }
 
+  async function refreshDashboard() {
+    const [s, r] = await Promise.all([
+      oneFinanceApi.transactions.summary(),
+      oneFinanceApi.transactions.recent(8),
+    ]);
+    setSummary(s);
+    setRecent(r);
+  }
+
   useEffect(() => {
     void (async () => {
       setLoading(true);
       setError(null);
       try {
-        const [paths] = await Promise.all([
-          oneFinanceApi.app.getPaths(),
+        const [info] = await Promise.all([
+          oneFinanceApi.app.getInfo(),
           refreshTree(),
           refreshCategories(),
+          refreshDashboard(),
         ]);
-        setDbFilePath(paths.dbFilePath);
+        setAppInfo(info);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load data");
       } finally {
@@ -128,15 +147,31 @@ function App() {
     }
   };
 
-  const onCreateMonth = async (year: number, month: number) => {
+  const onDeleteYear = async (year: number) => {
+    const ok = window.confirm(
+      `Delete year ${year}? This will delete its months and transactions.`
+    );
+    if (!ok) return;
+
     try {
-      const created = await oneFinanceApi.ledger.createMonth(year, month);
-      const next = { ...expandedYears, [year]: true };
+      await oneFinanceApi.ledger.deleteYear(year);
+      const next = { ...expandedYears };
+      delete next[year];
       setExpandedYears(next);
       saveExpandedYears(next);
-      await refreshTree(created.id);
+
+      const t = await refreshTree();
+      const stillSelected =
+        selectedPeriodId &&
+        t.flatMap((y) => y.months).some((m) => m.id === selectedPeriodId);
+      if (!stillSelected) {
+        const first = t.flatMap((y) => y.months)[0] ?? null;
+        setSelectedPeriod(first);
+      }
+
+      await refreshDashboard();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create month");
+      setError(e instanceof Error ? e.message : "Failed to delete year");
     }
   };
 
@@ -145,6 +180,7 @@ function App() {
   >["onCreate"] = async (input) => {
     await oneFinanceApi.transactions.create(input);
     await refreshTransactions(input.ledgerPeriodId);
+    await refreshDashboard();
   };
 
   const onUpdateTransaction: ComponentProps<
@@ -152,6 +188,7 @@ function App() {
   >["onUpdate"] = async (input) => {
     await oneFinanceApi.transactions.update(input);
     await refreshTransactions(input.ledgerPeriodId);
+    await refreshDashboard();
   };
 
   const onDeleteTransaction: ComponentProps<
@@ -159,6 +196,7 @@ function App() {
   >["onDelete"] = async (id) => {
     await oneFinanceApi.transactions.delete(id);
     if (selectedPeriod) await refreshTransactions(selectedPeriod.id);
+    await refreshDashboard();
   };
 
   const onCreateCategory = async (name: string) => {
@@ -170,12 +208,14 @@ function App() {
     await oneFinanceApi.categories.update({ id, name });
     await refreshCategories();
     if (selectedPeriod) await refreshTransactions(selectedPeriod.id);
+    await refreshDashboard();
   };
 
   const onDeleteCategory = async (id: number) => {
     await oneFinanceApi.categories.delete(id);
     await refreshCategories();
     if (selectedPeriod) await refreshTransactions(selectedPeriod.id);
+    await refreshDashboard();
   };
 
   return (
@@ -187,8 +227,9 @@ function App() {
         onToggleYear={onToggleYear}
         onSelectPeriod={setSelectedPeriod}
         onCreateYear={onCreateYear}
-        onCreateMonth={onCreateMonth}
-        dbFilePath={dbFilePath}
+        onDeleteYear={onDeleteYear}
+        view={view}
+        onNavigate={setView}
       />
 
       <main className="main">
@@ -200,21 +241,37 @@ function App() {
           <>
             {error && <div className="error global">{error}</div>}
 
-            <TransactionsView
-              period={selectedPeriod}
-              categories={categories}
-              transactions={transactions}
-              onCreate={onCreateTransaction}
-              onUpdate={onUpdateTransaction}
-              onDelete={onDeleteTransaction}
-            />
-
-            <CategoriesManager
-              categories={categories}
-              onCreate={onCreateCategory}
-              onRename={onRenameCategory}
-              onDelete={onDeleteCategory}
-            />
+            {view === "settings" ? (
+              <SettingsView
+                info={appInfo}
+                onOpenDbFolder={async () => {
+                  await oneFinanceApi.app.openDbFolder();
+                }}
+                onDeleteDb={async () => {
+                  await oneFinanceApi.app.deleteDb();
+                  // In dev we do not relaunch the whole Electron process.
+                  // Reloading the renderer forces a clean re-init.
+                  window.location.reload();
+                }}
+                categories={categories}
+                onCreateCategory={onCreateCategory}
+                onRenameCategory={onRenameCategory}
+                onDeleteCategory={onDeleteCategory}
+              />
+            ) : view === "dashboard" ? (
+              <DashboardView summary={summary} recent={recent} />
+            ) : (
+              <>
+                <TransactionsView
+                  period={selectedPeriod}
+                  categories={categories}
+                  transactions={transactions}
+                  onCreate={onCreateTransaction}
+                  onUpdate={onUpdateTransaction}
+                  onDelete={onDeleteTransaction}
+                />
+              </>
+            )}
           </>
         )}
       </main>

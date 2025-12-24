@@ -5,7 +5,16 @@ import type {
   Transaction,
   TransactionType,
 } from "../types";
-import { isoDateToday, monthName } from "../lib/date";
+import { monthName } from "../lib/date";
+
+function pad2(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function defaultDateForPeriod(period: LedgerPeriod) {
+  // Pick a deterministic default inside the selected month.
+  return `${period.year}-${pad2(period.month)}-01`;
+}
 
 export function TransactionsView(props: {
   period: LedgerPeriod | null;
@@ -32,25 +41,22 @@ export function TransactionsView(props: {
   }) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
 }) {
+  const period = props.period;
+
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [showEditor, setShowEditor] = useState(false);
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(isoDateToday());
+  const [date, setDate] = useState("2000-01-01");
   const [type, setType] = useState<TransactionType>("expense");
   const [categoryId, setCategoryId] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setEditingId(null);
-    setTitle("");
-    setAmount("");
-    setDate(isoDateToday());
-    setType("expense");
-    setCategoryId("");
-    setNotes("");
-    setError(null);
-  }, [props.period?.id]);
+  const defaultDate = useMemo(() => {
+    if (!period) return "2000-01-01";
+    return defaultDateForPeriod(period);
+  }, [period]);
 
   const summary = useMemo(() => {
     let income = 0;
@@ -62,7 +68,44 @@ export function TransactionsView(props: {
     return { income, expense, net: income - expense };
   }, [props.transactions]);
 
-  if (!props.period) {
+  useEffect(() => {
+    if (!period) return;
+    setEditingId(null);
+    setShowEditor(false);
+    setTitle("");
+    setAmount("");
+    setDate(defaultDate);
+    setType("expense");
+    setCategoryId("");
+    setNotes("");
+    setError(null);
+  }, [period, defaultDate]);
+
+  const resetEditor = () => {
+    setEditingId(null);
+    setTitle("");
+    setAmount("");
+    setDate(defaultDate);
+    setType("expense");
+    setCategoryId("");
+    setNotes("");
+    setError(null);
+    setShowEditor(false);
+  };
+
+  const openCreate = () => {
+    setEditingId(null);
+    setTitle("");
+    setAmount("");
+    setDate(defaultDate);
+    setType("expense");
+    setCategoryId("");
+    setNotes("");
+    setError(null);
+    setShowEditor(true);
+  };
+
+  if (!period) {
     return (
       <section className="contentEmpty">
         <div className="panelTitle">Pick a Month</div>
@@ -73,9 +116,9 @@ export function TransactionsView(props: {
     );
   }
 
-  const periodId = props.period.id;
+  const periodId = period.id;
 
-  const periodTitle = `${monthName(props.period.month)} ${props.period.year}`;
+  const periodTitle = `${monthName(period.month)} ${period.year}`;
 
   const onSubmit = async () => {
     setError(null);
@@ -112,13 +155,7 @@ export function TransactionsView(props: {
         });
       }
 
-      setEditingId(null);
-      setTitle("");
-      setAmount("");
-      setDate(isoDateToday());
-      setType("expense");
-      setCategoryId("");
-      setNotes("");
+      resetEditor();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save transaction");
     }
@@ -130,107 +167,132 @@ export function TransactionsView(props: {
         <div className="panelHeader">
           <div>
             <div className="panelTitle">{periodTitle}</div>
-            <div className="muted small">
-              Income: {summary.income.toFixed(2)} · Expense:{" "}
-              {summary.expense.toFixed(2)} · Net: {summary.net.toFixed(2)}
+            <div className="txMeta">
+              <span className="txPill">
+                <span className="muted">Net</span>{" "}
+                <span className="mono">{summary.net.toFixed(2)}</span>
+              </span>
+              <span className="txPill">
+                <span className="muted">Income</span>{" "}
+                <span className="mono amount income">
+                  {summary.income.toFixed(2)}
+                </span>
+              </span>
+              <span className="txPill">
+                <span className="muted">Expense</span>{" "}
+                <span className="mono amount expense">
+                  {summary.expense.toFixed(2)}
+                </span>
+              </span>
             </div>
+          </div>
+
+          <div className="panelHeaderActions">
+            <button
+              className="btn btnIcon"
+              onClick={() => {
+                if (showEditor) resetEditor();
+                else openCreate();
+              }}
+              title={showEditor ? "Close" : "Add transaction"}
+              aria-label={showEditor ? "Close" : "Add transaction"}
+            >
+              <span className="icon">{showEditor ? "×" : "＋"}</span>
+              <span>{showEditor ? "Close" : "Add"}</span>
+            </button>
           </div>
         </div>
 
         {error && <div className="error">{error}</div>}
 
-        <div className="formGrid">
-          <div className="field">
-            <label className="label">Type</label>
-            <select
-              className="input"
-              value={type}
-              onChange={(e) => setType(e.target.value as TransactionType)}
-            >
-              <option value="expense">Expense</option>
-              <option value="income">Income</option>
-            </select>
-          </div>
+        {showEditor && (
+          <div className="txEditor">
+            <div className="formGrid">
+              <div className="field span3">
+                <label className="label">Type</label>
+                <select
+                  className="input"
+                  value={type}
+                  onChange={(e) => setType(e.target.value as TransactionType)}
+                >
+                  <option value="expense">Expense</option>
+                  <option value="income">Income</option>
+                </select>
+              </div>
 
-          <div className="field">
-            <label className="label">Title</label>
-            <input
-              className="input"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Groceries"
-            />
-          </div>
+              <div className="field span5">
+                <label className="label">Title</label>
+                <input
+                  className="input"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. Groceries"
+                />
+              </div>
 
-          <div className="field">
-            <label className="label">Amount</label>
-            <input
-              className="input"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              inputMode="decimal"
-              placeholder="e.g. 45.50"
-            />
-          </div>
+              <div className="field span2">
+                <label className="label">Amount</label>
+                <input
+                  className="input"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  inputMode="decimal"
+                  placeholder="e.g. 45.50"
+                />
+              </div>
 
-          <div className="field">
-            <label className="label">Date</label>
-            <input
-              className="input"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          </div>
+              <div className="field span2">
+                <label className="label">Date</label>
+                <input
+                  className="input"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </div>
 
-          <div className="field">
-            <label className="label">Category</label>
-            <select
-              className="input"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-            >
-              <option value="">(none)</option>
-              {props.categories.map((c) => (
-                <option key={c.id} value={String(c.id)}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className="field span4">
+                <label className="label">Category</label>
+                <select
+                  className="input"
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                >
+                  <option value="">(none)</option>
+                  {props.categories.map((c) => (
+                    <option key={c.id} value={String(c.id)}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <div className="field fieldSpan">
-            <label className="label">Notes</label>
-            <input
-              className="input"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Optional"
-            />
-          </div>
+              <div className="field span8">
+                <label className="label">Notes</label>
+                <input
+                  className="input"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Optional"
+                />
+              </div>
 
-          <div className="row gap">
-            <button className="btn" onClick={onSubmit}>
-              {editingId ? "Update" : "Add"}
-            </button>
-            {editingId && (
-              <button
-                className="btn"
-                onClick={() => {
-                  setEditingId(null);
-                  setTitle("");
-                  setAmount("");
-                  setDate(isoDateToday());
-                  setType("expense");
-                  setCategoryId("");
-                  setNotes("");
-                }}
-              >
-                Cancel
-              </button>
-            )}
+              <div className="field span12">
+                <div className="row gap">
+                  <button className="btn" onClick={onSubmit}>
+                    {editingId ? "Update" : "Add"}
+                  </button>
+                  <button className="btn" onClick={resetEditor}>
+                    Cancel
+                  </button>
+                  <div className="muted small">
+                    This transaction will appear in the month matching its date.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="panel">
@@ -270,9 +332,11 @@ export function TransactionsView(props: {
                 {t.type === "income" ? "+" : "-"}
                 {t.amount.toFixed(2)}
               </div>
-              <div className="row gap right">
+              <div className="row gap right txRowActions">
                 <button
-                  className="btn"
+                  className="iconBtn solid"
+                  title="Edit"
+                  aria-label="Edit"
                   onClick={() => {
                     setEditingId(t.id);
                     setTitle(t.title);
@@ -282,12 +346,15 @@ export function TransactionsView(props: {
                     setCategoryId(t.categoryId ? String(t.categoryId) : "");
                     setNotes(t.notes ?? "");
                     setError(null);
+                    setShowEditor(true);
                   }}
                 >
-                  Edit
+                  <span className="icon">✎</span>
                 </button>
                 <button
-                  className="btn danger"
+                  className="iconBtn solid danger"
+                  title="Delete"
+                  aria-label="Delete"
                   onClick={async () => {
                     const ok = window.confirm(
                       `Delete transaction "${t.title}"?`
@@ -296,14 +363,17 @@ export function TransactionsView(props: {
                     await props.onDelete(t.id);
                   }}
                 >
-                  Delete
+                  <span className="icon">🗑</span>
                 </button>
               </div>
             </div>
           ))}
 
           {props.transactions.length === 0 && (
-            <div className="muted">No transactions yet</div>
+            <div className="tableEmpty">
+              <div className="muted">No transactions yet.</div>
+              <div className="muted small">Click “Add” to create one.</div>
+            </div>
           )}
         </div>
       </div>

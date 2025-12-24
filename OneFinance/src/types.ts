@@ -29,3 +29,14 @@ export interface Transaction {
   categoryId: number | null;
   categoryName: string | null;
 }
+
+export interface Summary {
+  incomeTotal: number;
+  expenseTotal: number;
+  balance: number;
+}
+
+export interface RecentTransaction extends Transaction {
+  year: number;
+  month: number;
+}

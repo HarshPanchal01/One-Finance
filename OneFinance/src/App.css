@@ -8,18 +8,15 @@
 
 .sidebar {
   border-right: 1px solid #2a2a2a;
-  padding: 12px;
   background: #0f0f0f;
-  overflow: auto;
-}
-
-.sidebarHeader {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-bottom: 10px;
+  min-height: 0;
+}
+
+.sidebarTop {
+  padding: 12px;
   border-bottom: 1px solid #2a2a2a;
-  margin-bottom: 10px;
 }
 
 .appTitle {
@@ -27,9 +24,104 @@
   font-weight: 700;
 }
 
-.sidebarActions {
+.sidebarHeaderRow {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.sidebarHeaderActions {
+  display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+.iconBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;
+  padding: 6px;
+  border-radius: 8px;
+  line-height: 1;
+}
+
+.iconBtn:hover {
+  border-color: #333;
+  background: #171717;
+}
+
+.iconBtn.active {
+  border-color: #444;
+  background: #1a1a1a;
+}
+
+.iconBtn.solid {
+  background: #1a1a1a;
+  border-color: #2a2a2a;
+}
+
+.iconBtn.solid:hover {
+  border-color: #3b3b3b;
+  background: #1f1f1f;
+}
+
+.iconBtn.solid.danger {
+  border-color: #5a2b2b;
+}
+
+.iconBtn.solid.danger:hover {
+  border-color: #8a3b3b;
+}
+
+.icon {
+  display: inline-block;
+  font-size: 16px;
+}
+
+.tree {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+}
+
+.treeTopRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: inherit;
+  margin-bottom: 10px;
+}
+
+.treeTopRow:hover {
+  border-color: #333;
+  background: #171717;
+}
+
+.treeTopRow.active {
+  border-color: #444;
+  background: #1a1a1a;
+}
+
+.treeIcon {
+  display: inline-block;
+  width: 18px;
+}
+
+.sidebarFooter {
+  padding: 10px 12px;
+  border-top: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .treeYearRow,
@@ -74,6 +166,69 @@
   font-weight: 600;
 }
 
+.ctxMenu {
+  position: fixed;
+  z-index: 1000;
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 6px;
+  min-width: 160px;
+}
+
+.ctxMenuItem {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.ctxMenuItem:hover {
+  border-color: #333;
+  background: #171717;
+}
+
+.ctxMenuItem.danger {
+  color: #f0b1b1;
+}
+
+.dashStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.dashStat {
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  background: #101010;
+  padding: 12px;
+}
+
+.dashRecentHead,
+.dashRecentRow {
+  display: grid;
+  grid-template-columns: 120px 1.5fr 1fr 120px;
+  gap: 10px;
+  align-items: center;
+}
+
+.dashRecentHead {
+  color: #a6a6a6;
+  font-size: 12px;
+  padding: 0 6px;
+}
+
+.dashRecentRow {
+  border: 1px solid #222;
+  background: #101010;
+  border-radius: 12px;
+  padding: 10px;
+}
+
 .main {
   overflow: auto;
   padding: 14px;
@@ -103,6 +258,20 @@
   margin-bottom: 10px;
 }
 
+.panelHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.txEditor {
+  margin-top: 10px;
+  border: 1px solid #222;
+  background: #101010;
+  border-radius: 12px;
+  padding: 12px;
+}
+
 .panelTitle {
   font-size: 16px;
   font-weight: 700;
@@ -122,6 +291,17 @@
   color: #e8e8e8;
   padding: 8px 10px;
   border-radius: 10px;
+}
+
+.btnIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn.active {
+  border-color: #444;
+  background: #1f1f1f;
 }
 
 .btn:hover {
@@ -167,18 +347,56 @@
   gap: 8px;
 }
 
+.txMeta {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.txPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #2a2a2a;
+  background: #101010;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
 .formGrid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(12, 1fr);
   gap: 10px;
 }
 
 .field {
-  grid-column: span 1;
+  grid-column: span 12;
 }
 
+.span2 {
+  grid-column: span 2;
+}
+
+.span3 {
+  grid-column: span 3;
+}
+
+.span4 {
+  grid-column: span 4;
+}
+
+.span5 {
+  grid-column: span 5;
+}
+
+.span8 {
+  grid-column: span 8;
+}
+
+.span12,
 .fieldSpan {
-  grid-column: span 6;
+  grid-column: 1 / -1;
 }
 
 .table {
@@ -206,6 +424,18 @@
   background: #101010;
   border-radius: 12px;
   padding: 10px;
+}
+
+.txRowActions {
+  justify-content: flex-end;
+}
+
+.tableEmpty {
+  border: 1px dashed #2a2a2a;
+  background: #101010;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
 }
 
 .mono {
@@ -253,6 +483,28 @@
   align-items: center;
 }
 
+.kv {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kvRow {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.kvKey {
+  color: #a6a6a6;
+  font-size: 12px;
+}
+
+.kvValue {
+  word-break: break-all;
+}
+
 @media (max-width: 900px) {
   .appShell {
     grid-template-columns: 240px 1fr;
@@ -264,7 +516,16 @@
   .formGrid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .fieldSpan {
+  .field {
     grid-column: span 2;
+  }
+  .span2,
+  .span3,
+  .span4,
+  .span5,
+  .span8,
+  .span12,
+  .fieldSpan {
+    grid-column: 1 / -1;
   }
 }

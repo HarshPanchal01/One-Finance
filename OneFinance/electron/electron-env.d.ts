@@ -26,6 +26,14 @@ interface Window {
   oneFinance: {
     app: {
       getPaths: () => Promise<{ userDataPath: string; dbFilePath: string }>;
+      getInfo: () => Promise<{
+        name: string;
+        version: string;
+        userDataPath: string;
+        dbFilePath: string;
+      }>;
+      openDbFolder: () => Promise<{ ok: true }>;
+      deleteDb: () => Promise<{ ok: true }>;
     };
     ledger: {
       listTree: () => Promise<
@@ -39,6 +47,7 @@ interface Window {
         year: number,
         month: number
       ) => Promise<{ id: number; year: number; month: number }>;
+      deleteYear: (year: number) => Promise<{ ok: true }>;
     };
     categories: {
       list: () => Promise<
@@ -84,6 +93,26 @@ interface Window {
           notes: string | null;
           categoryId: number | null;
           categoryName: string | null;
+        }>
+      >;
+      summary: () => Promise<{
+        incomeTotal: number;
+        expenseTotal: number;
+        balance: number;
+      }>;
+      recent: (limit?: number) => Promise<
+        Array<{
+          id: number;
+          ledgerPeriodId: number;
+          title: string;
+          amount: number;
+          date: string;
+          type: "income" | "expense";
+          notes: string | null;
+          categoryId: number | null;
+          categoryName: string | null;
+          year: number;
+          month: number;
         }>
       >;
       create: (input: {

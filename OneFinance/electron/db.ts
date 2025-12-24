@@ -34,6 +34,17 @@ export interface DbTransaction {
   categoryName: string | null;
 }
 
+export interface DbRecentTransaction extends DbTransaction {
+  year: number;
+  month: number;
+}
+
+export interface DbSummary {
+  incomeTotal: number;
+  expenseTotal: number;
+  balance: number;
+}
+
 let db: import("better-sqlite3").Database | null = null;
 
 export function getDbFilePath() {
@@ -50,6 +61,23 @@ function assertNonEmptyString(name: string, value: unknown) {
   if (typeof value !== "string" || value.trim().length === 0) {
     throw new Error(`${name} is required`);
   }
+}
+
+function pad2(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function parseIsoDateToYearMonth(date: string) {
+  // Expected: YYYY-MM-DD
+  const m = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(date);
+  if (!m) throw new Error("date must be YYYY-MM-DD");
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  if (!Number.isInteger(year) || year < 1900 || year > 3000)
+    throw new Error("date year out of range");
+  if (!Number.isInteger(month) || month < 1 || month > 12)
+    throw new Error("date month out of range");
+  return { year, month };
 }
 
 export function initDb() {
@@ -126,6 +154,22 @@ export function initDb() {
   return db;
 }
 
+export function closeDb() {
+  if (!db) return;
+  db.close();
+  db = null;
+}
+
+export function deleteDbFile() {
+  const dbPath = getDbFilePath();
+  closeDb();
+  try {
+    fs.rmSync(dbPath, { force: true });
+  } catch {
+    // ignore
+  }
+}
+
 export function listTree(): Array<{ year: number; months: DbLedgerPeriod[] }> {
   const database = initDb();
 
@@ -157,9 +201,18 @@ export function createYear(year: number) {
   if (year < 1900 || year > 3000) throw new Error("year out of range");
 
   const database = initDb();
-  database
-    .prepare("INSERT OR IGNORE INTO ledger_years (year) VALUES (?)")
-    .run(year);
+  const tx = database.transaction(() => {
+    database
+      .prepare("INSERT OR IGNORE INTO ledger_years (year) VALUES (?)")
+      .run(year);
+
+    const insertMonth = database.prepare(
+      "INSERT OR IGNORE INTO ledger_periods (year, month) VALUES (?, ?)"
+    );
+    for (let month = 1; month <= 12; month++) insertMonth.run(year, month);
+  });
+
+  tx();
   return { year };
 }
 
@@ -185,6 +238,62 @@ export function createMonth(year: number, month: number): DbLedgerPeriod {
 
   if (!row) throw new Error("failed to create month");
   return row;
+}
+
+export function deleteYear(year: number) {
+  assertInt("year", year);
+  const database = initDb();
+  database.prepare("DELETE FROM ledger_years WHERE year = ?").run(year);
+  return { ok: true };
+}
+
+export function getSummary(): DbSummary {
+  const database = initDb();
+
+  const row = database
+    .prepare(
+      `SELECT
+         COALESCE(SUM(CASE WHEN type = 'income' THEN amount END), 0) AS incomeTotal,
+         COALESCE(SUM(CASE WHEN type = 'expense' THEN amount END), 0) AS expenseTotal
+       FROM transactions`
+    )
+    .get() as { incomeTotal: number; expenseTotal: number } | undefined;
+
+  const incomeTotal = Number(row?.incomeTotal ?? 0);
+  const expenseTotal = Number(row?.expenseTotal ?? 0);
+  return {
+    incomeTotal,
+    expenseTotal,
+    balance: incomeTotal - expenseTotal,
+  };
+}
+
+export function listRecentTransactions(limit = 8): DbRecentTransaction[] {
+  assertInt("limit", limit);
+  if (limit < 1 || limit > 100) throw new Error("limit out of range");
+
+  const database = initDb();
+  return database
+    .prepare(
+      `SELECT
+         t.id,
+         t.ledgerPeriodId,
+         t.title,
+         t.amount,
+         t.date,
+         t.type,
+         t.notes,
+         t.categoryId,
+         c.name AS categoryName,
+         p.year,
+         p.month
+       FROM transactions t
+       JOIN ledger_periods p ON p.id = t.ledgerPeriodId
+       LEFT JOIN categories c ON c.id = t.categoryId
+       ORDER BY t.date DESC, t.id DESC
+       LIMIT ?`
+    )
+    .all(limit) as DbRecentTransaction[];
 }
 
 export function listCategories(): DbCategory[] {
@@ -262,6 +371,11 @@ export function listTransactions(ledgerPeriodId: number): DbTransaction[] {
   assertInt("ledgerPeriodId", ledgerPeriodId);
 
   const database = initDb();
+  const period = database
+    .prepare("SELECT year, month FROM ledger_periods WHERE id = ?")
+    .get(ledgerPeriodId) as { year: number; month: number } | undefined;
+  if (!period) return [];
+  const prefix = `${period.year}-${pad2(period.month)}-`;
   return database
     .prepare(
       `SELECT 
@@ -276,10 +390,10 @@ export function listTransactions(ledgerPeriodId: number): DbTransaction[] {
         c.name AS categoryName
       FROM transactions t
       LEFT JOIN categories c ON c.id = t.categoryId
-      WHERE t.ledgerPeriodId = ?
+      WHERE t.date LIKE ?
       ORDER BY t.date DESC, t.id DESC`
     )
-    .all(ledgerPeriodId) as DbTransaction[];
+    .all(`${prefix}%`) as DbTransaction[];
 }
 
 export function createTransaction(input: {
@@ -291,7 +405,6 @@ export function createTransaction(input: {
   notes?: string | null;
   categoryId?: number | null;
 }) {
-  assertInt("ledgerPeriodId", input.ledgerPeriodId);
   assertNonEmptyString("title", input.title);
   if (typeof input.amount !== "number" || !Number.isFinite(input.amount))
     throw new Error("amount must be a number");
@@ -301,13 +414,15 @@ export function createTransaction(input: {
   if (input.categoryId != null) assertInt("categoryId", input.categoryId);
 
   const database = initDb();
+  const { year, month } = parseIsoDateToYearMonth(input.date);
+  const period = createMonth(year, month);
   const info = database
     .prepare(
       `INSERT INTO transactions (ledgerPeriodId, title, amount, date, type, notes, categoryId)
        VALUES (@ledgerPeriodId, @title, @amount, @date, @type, @notes, @categoryId)`
     )
     .run({
-      ledgerPeriodId: input.ledgerPeriodId,
+      ledgerPeriodId: period.id,
       title: input.title.trim(),
       amount: input.amount,
       date: input.date,
@@ -330,7 +445,6 @@ export function updateTransaction(input: {
   categoryId?: number | null;
 }) {
   assertInt("id", input.id);
-  assertInt("ledgerPeriodId", input.ledgerPeriodId);
   assertNonEmptyString("title", input.title);
   if (typeof input.amount !== "number" || !Number.isFinite(input.amount))
     throw new Error("amount must be a number");
@@ -340,6 +454,8 @@ export function updateTransaction(input: {
   if (input.categoryId != null) assertInt("categoryId", input.categoryId);
 
   const database = initDb();
+  const { year, month } = parseIsoDateToYearMonth(input.date);
+  const period = createMonth(year, month);
   database
     .prepare(
       `UPDATE transactions
@@ -354,7 +470,7 @@ export function updateTransaction(input: {
     )
     .run({
       id: input.id,
-      ledgerPeriodId: input.ledgerPeriodId,
+      ledgerPeriodId: period.id,
       title: input.title.trim(),
       amount: input.amount,
       date: input.date,

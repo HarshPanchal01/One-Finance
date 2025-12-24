@@ -1,8 +1,17 @@
-import type { Category, LedgerYearNode, Transaction } from "../types";
+import type {
+  Category,
+  LedgerYearNode,
+  RecentTransaction,
+  Summary,
+  Transaction,
+} from "../types";
 
 export const oneFinanceApi = {
   app: {
     getPaths: () => window.oneFinance.app.getPaths(),
+    getInfo: () => window.oneFinance.app.getInfo(),
+    openDbFolder: () => window.oneFinance.app.openDbFolder(),
+    deleteDb: () => window.oneFinance.app.deleteDb(),
   },
   ledger: {
     listTree: (): Promise<LedgerYearNode[]> =>
@@ -10,6 +19,7 @@ export const oneFinanceApi = {
     createYear: (year: number) => window.oneFinance.ledger.createYear(year),
     createMonth: (year: number, month: number) =>
       window.oneFinance.ledger.createMonth(year, month),
+    deleteYear: (year: number) => window.oneFinance.ledger.deleteYear(year),
   },
   categories: {
     list: (): Promise<Category[]> => window.oneFinance.categories.list(),
@@ -22,6 +32,9 @@ export const oneFinanceApi = {
   transactions: {
     list: (ledgerPeriodId: number): Promise<Transaction[]> =>
       window.oneFinance.transactions.list(ledgerPeriodId),
+    summary: (): Promise<Summary> => window.oneFinance.transactions.summary(),
+    recent: (limit?: number): Promise<RecentTransaction[]> =>
+      window.oneFinance.transactions.recent(limit),
     create: (input: {
       ledgerPeriodId: number;
       title: string;
