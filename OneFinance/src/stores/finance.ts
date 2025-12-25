@@ -1,0 +1,378 @@
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import type {
+  LedgerPeriod,
+  Category,
+  TransactionWithCategory,
+  CreateTransactionInput,
+  PeriodSummary,
+  CategoryBreakdown,
+} from "../types";
+
+export const useFinanceStore = defineStore("finance", () => {
+  // ============================================
+  // STATE
+  // ============================================
+
+  // Current period selection
+  const currentPeriod = ref<LedgerPeriod | null>(null);
+  const ledgerYears = ref<number[]>([]);
+  const ledgerPeriods = ref<LedgerPeriod[]>([]);
+
+  // Categories
+  const categories = ref<Category[]>([]);
+
+  // Transactions for current period (or Global if null)
+  const transactions = ref<TransactionWithCategory[]>([]);
+  // Global recent transactions (always Global)
+  const recentTransactions = ref<TransactionWithCategory[]>([]);
+
+  // Summary data - always have default values
+  const periodSummary = ref<PeriodSummary>({
+    totalIncome: 0,
+    totalExpenses: 0,
+    balance: 0,
+    transactionCount: 0,
+  });
+  const incomeBreakdown = ref<CategoryBreakdown[]>([]);
+  const expenseBreakdown = ref<CategoryBreakdown[]>([]);
+
+  // Loading states - separate for initial load vs period changes
+  const isLoading = ref(true); // Initial load
+  const isChangingPeriod = ref(false); // Period changes (doesn't hide UI)
+  const error = ref<string | null>(null);
+
+  // ============================================
+  // GETTERS (Computed)
+  // ============================================
+
+  const hasCurrentPeriod = computed(() => currentPeriod.value !== null);
+
+  const incomeTransactions = computed(() =>
+    transactions.value.filter((t) => t.type === "income")
+  );
+
+  const expenseTransactions = computed(() =>
+    transactions.value.filter((t) => t.type === "expense")
+  );
+
+  // ============================================
+  // ACTIONS - Initialization
+  // ============================================
+
+  async function initialize() {
+    console.log("[Store] initialize() called");
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      // Load categories first (they're always needed)
+      await fetchCategories();
+      console.log("[Store] Categories loaded:", categories.value.length);
+
+      // Load years and periods
+      ledgerYears.value = await window.electronAPI.getLedgerYears();
+      ledgerPeriods.value = await window.electronAPI.getLedgerPeriods();
+      console.log(
+        "[Store] Years:",
+        ledgerYears.value,
+        "Periods:",
+        ledgerPeriods.value.length
+      );
+
+      // Default to Global View (no current period)
+      await clearPeriod();
+
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : "Failed to initialize";
+      console.error("[Store] Initialization error:", e);
+    } finally {
+      isLoading.value = false;
+      console.log(
+        "[Store] Initialization complete, isLoading:",
+        isLoading.value
+      );
+    }
+  }
+
+  // ============================================
+  // ACTIONS - Period Management
+  // ============================================
+
+  async function createYear(year: number) {
+    await window.electronAPI.createLedgerYear(year);
+    // Auto-create all 12 months for the year
+    for (let month = 1; month <= 12; month++) {
+      await window.electronAPI.createLedgerPeriod(year, month);
+    }
+    ledgerYears.value = await window.electronAPI.getLedgerYears();
+    ledgerPeriods.value = await window.electronAPI.getLedgerPeriods();
+  }
+
+  async function deleteYear(year: number) {
+    await window.electronAPI.deleteLedgerYear(year);
+    ledgerYears.value = await window.electronAPI.getLedgerYears();
+    ledgerPeriods.value = await window.electronAPI.getLedgerPeriods();
+
+    // If deleted current period's year, reset to Global
+    if (currentPeriod.value?.year === year) {
+      await clearPeriod();
+    }
+  }
+
+  async function selectPeriod(year: number, month: number) {
+    console.log(`[Store] selectPeriod called: ${year}-${month}`);
+    isChangingPeriod.value = true;
+    error.value = null;
+
+    try {
+      currentPeriod.value = await window.electronAPI.createLedgerPeriod(
+        year,
+        month
+      );
+      console.log(`[Store] currentPeriod set to:`, currentPeriod.value);
+
+      // Refresh periods list in case a new one was created
+      ledgerPeriods.value = await window.electronAPI.getLedgerPeriods();
+
+      // Fetch data for the selected period
+      if (currentPeriod.value) {
+        await fetchTransactions(currentPeriod.value.id);
+        await fetchPeriodSummary();
+      }
+
+      console.log(`[Store] Period data fetched`);
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : "Failed to select period";
+      console.error("[Store] Select period error:", e);
+    } finally {
+      isChangingPeriod.value = false;
+    }
+  }
+
+  async function clearPeriod() {
+    console.log("[Store] clearPeriod called (Global Mode)");
+    isChangingPeriod.value = true;
+    currentPeriod.value = null;
+
+    try {
+      // Fetch Global Data
+      await fetchRecentTransactions(5); // Ensure recent list is up to date
+      await fetchTransactions(null); // All transactions
+      await fetchPeriodSummary(); // Global summary
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : "Failed to load global data";
+      console.error("[Store] Clear period error:", e);
+    } finally {
+      isChangingPeriod.value = false;
+    }
+  }
+
+  // ============================================
+  // ACTIONS - Categories
+  // ============================================
+
+  async function fetchCategories() {
+    categories.value = await window.electronAPI.getCategories();
+  }
+
+  async function addCategory(name: string, colorCode: string, icon: string) {
+    const newCategory = await window.electronAPI.createCategory(
+      name,
+      colorCode,
+      icon
+    );
+    categories.value.push(newCategory);
+    return newCategory;
+  }
+
+  async function editCategory(
+    id: number,
+    name: string,
+    colorCode: string,
+    icon: string
+  ) {
+    const updated = await window.electronAPI.updateCategory(
+      id,
+      name,
+      colorCode,
+      icon
+    );
+    if (updated) {
+      const index = categories.value.findIndex((c) => c.id === id);
+      if (index !== -1) {
+        categories.value[index] = updated;
+      }
+    }
+    return updated;
+  }
+
+  async function removeCategory(id: number) {
+    const success = await window.electronAPI.deleteCategory(id);
+    if (success) {
+      categories.value = categories.value.filter((c) => c.id !== id);
+    }
+    return success;
+  }
+
+  // ============================================
+  // ACTIONS - Transactions
+  // ============================================
+
+  async function fetchTransactions(periodId?: number | null) {
+    transactions.value = await window.electronAPI.getTransactions(periodId);
+  }
+
+  async function fetchRecentTransactions(limit: number) {
+    recentTransactions.value = await window.electronAPI.getTransactions(
+      null,
+      limit
+    );
+  }
+
+  async function addTransaction(
+    input: Omit<CreateTransactionInput, "ledgerPeriodId">
+  ) {
+    // Determine which period to attach this to.
+    // If Global Mode (currentPeriod is null), we must infer or ask for period.
+    // For now, if currentPeriod is null, we can try to find the period based on the date
+    // or default to "current real world month" if we want to be smart.
+    // BUT the simpler logic is: IF we are in a specific period, use it.
+    // IF we are in Global Mode, we might need the User to specify, or we can auto-assign based on date.
+
+    let targetPeriodId: number;
+
+    if (currentPeriod.value) {
+      targetPeriodId = currentPeriod.value.id;
+    } else {
+      // Global Mode: infer from date
+      const date = new Date(input.date);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const period = await window.electronAPI.createLedgerPeriod(year, month);
+      targetPeriodId = period.id;
+    }
+
+    const newTransaction = await window.electronAPI.createTransaction({
+      ...input,
+      ledgerPeriodId: targetPeriodId,
+    });
+
+    // Refresh Data
+    await fetchRecentTransactions(5);
+
+    // Only update main list if it matches current filter (Global or Specific Period)
+    if (!currentPeriod.value || currentPeriod.value.id === targetPeriodId) {
+        // Add to front if valid
+        transactions.value.unshift(newTransaction);
+        // Refresh summary
+        await fetchPeriodSummary();
+    }
+
+    return newTransaction;
+  }
+
+  async function editTransaction(
+    id: number,
+    input: Partial<CreateTransactionInput>
+  ) {
+    const updated = await window.electronAPI.updateTransaction(id, input);
+    if (updated) {
+      const index = transactions.value.findIndex((t) => t.id === id);
+      if (index !== -1) {
+        // If the date changed such that it moves out of the current view (if period specific),
+        // we might want to remove it. But for simplicity, we just update it in place or re-fetch.
+        // Re-fetching is safer.
+        if (currentPeriod.value) {
+            // Check if it still belongs?
+            // Easier to just re-fetch the list to be safe
+             await fetchTransactions(currentPeriod.value.id);
+        } else {
+             // Global mode, just update
+             transactions.value[index] = updated;
+        }
+      }
+      await fetchRecentTransactions(5); // Update dashboard list
+      await fetchPeriodSummary(); // Refresh summary
+    }
+    return updated;
+  }
+
+  async function removeTransaction(id: number) {
+    const success = await window.electronAPI.deleteTransaction(id);
+    if (success) {
+      transactions.value = transactions.value.filter((t) => t.id !== id);
+      await fetchRecentTransactions(5); // Update dashboard list
+      await fetchPeriodSummary(); // Refresh summary
+    }
+    return success;
+  }
+
+  // ============================================
+  // ACTIONS - Summary / Dashboard
+  // ============================================
+
+  async function fetchPeriodSummary() {
+    const periodId = currentPeriod.value?.id || null; // null = Global
+
+    const summary = await window.electronAPI.getPeriodSummary(periodId);
+
+    periodSummary.value = summary || {
+      totalIncome: 0,
+      totalExpenses: 0,
+      balance: 0,
+      transactionCount: 0,
+    };
+
+    incomeBreakdown.value = await window.electronAPI.getCategoryBreakdown(
+      periodId,
+      "income"
+    );
+    expenseBreakdown.value = await window.electronAPI.getCategoryBreakdown(
+      periodId,
+      "expense"
+    );
+  }
+
+  // ============================================
+  // RETURN STORE
+  // ============================================
+
+  return {
+    // State
+    currentPeriod,
+    ledgerYears,
+    ledgerPeriods,
+    categories,
+    transactions,
+    recentTransactions,
+    periodSummary,
+    incomeBreakdown,
+    expenseBreakdown,
+    isLoading,
+    isChangingPeriod,
+    error,
+
+    // Getters
+    hasCurrentPeriod,
+    incomeTransactions,
+    expenseTransactions,
+
+    // Actions
+    initialize,
+    createYear,
+    deleteYear,
+    selectPeriod,
+    clearPeriod,
+    fetchCategories,
+    addCategory,
+    editCategory,
+    removeCategory,
+    fetchTransactions,
+    fetchRecentTransactions,
+    addTransaction,
+    editTransaction,
+    removeTransaction,
+    fetchPeriodSummary,
+  };
+});

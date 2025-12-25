@@ -1,56 +1,3 @@
-## Visual Studio
-.vs/
-*.user
-*.userosscache
-*.suo
-*.cache
-*.pdb
-*.opendb
-*.dbmdl
-
-## Build artifacts
-bin/
-obj/
-[Bb]uild/
-[Ll]og/
-
-## .NET
-*.dll
-*.exe
-*.cache
-*.mdb
-project.lock.json
-
-## NuGet
-packages/
-*.nupkg
-*.snupkg
-.nuget/
-project.fragment.lock.json
-artifacts/
-
-## Avalonia specific
-# Generated files
-*.g.cs
-*.g.i.cs
-
-# Avalonia designer
-.avalonia/
-
-## SQLite database (local dev data)
-*.db3
-*.db3-shm
-*.db3-wal
-*.sqlite
-*.sqlite3
-
-## Logs
-*.log
-
-## IDEs
-# Rider
-.idea/
-
 # VS Code
 .vscode/
 
@@ -66,3 +13,54 @@ Desktop.ini
 
 # Linux
 *~
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ----------------------------------------------------
+# Project-specific ignores (Vite + Vue + Electron)
+# ----------------------------------------------------
+
+# Build outputs (inside app folder)
+OneFinance/dist/
+OneFinance/dist-ssr/
+OneFinance/dist-electron/
+
+# Electron Builder release artifacts
+OneFinance/release/
+*.AppImage
+*.asar
+*.asar.unpacked
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Environment files (provide .env.example instead)
+.env
+.env.*
+!.env.example
+
+# Tooling caches
+.eslintcache
