@@ -1,4 +1,4 @@
-import { ipcMain, shell, app } from "electron";
+import { ipcMain, shell } from "electron";
 import fs from "node:fs";
 import {
   // Ledger Years
