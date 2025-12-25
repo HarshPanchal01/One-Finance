@@ -31,7 +31,9 @@ async function deleteDatabase() {
   ) {
     const success = await window.electronAPI.deleteDatabase();
     if (success) {
-      alert("Database deleted. The app will now close. Please restart it.");
+      alert(
+        "Database deleted. Please restart the application (run npm run dev)."
+      );
       window.close();
     } else {
       alert("Failed to delete database. Please try closing the app first.");

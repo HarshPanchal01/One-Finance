@@ -194,14 +194,7 @@ export function registerIpcHandlers(): void {
         fs.unlinkSync(dbPath + "-shm");
       }
 
-      console.log("[IPC] Database deleted, relaunching app...");
-
-      // Relaunch the app after a short delay to allow the IPC response to return
-      setTimeout(() => {
-        app.relaunch();
-        app.exit(0);
-      }, 500);
-
+      console.log("[IPC] Database deleted.");
       return true;
     } catch (error) {
       console.error("[IPC] Failed to delete database:", error);
