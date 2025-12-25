@@ -31,6 +31,20 @@ export function getDb(): ReturnType<typeof Database> {
   return _db;
 }
 
+/**
+ * Close the database connection and reset the instance
+ */
+export function closeDb(): void {
+  if (_db) {
+    try {
+      _db.close();
+    } catch (e) {
+      console.error("[DB] Error closing database:", e);
+    }
+    _db = null;
+  }
+}
+
 // Export db as a getter for backward compatibility
 export const db = new Proxy({} as ReturnType<typeof Database>, {
   get(_target, prop) {

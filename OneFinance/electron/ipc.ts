@@ -29,7 +29,7 @@ import {
   type CreateTransactionInput,
   // DB paths and instance
   dbPath,
-  getDb,
+  closeDb,
 } from "./db";
 
 /**
@@ -181,11 +181,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle("system:deleteDatabase", async () => {
     try {
       // Close the database connection first
-      try {
-        getDb().close();
-      } catch {
-        // Database might not be open, that's okay
-      }
+      closeDb();
 
       // Delete the database file and related files
       if (fs.existsSync(dbPath)) {
@@ -197,6 +193,8 @@ export function registerIpcHandlers(): void {
       if (fs.existsSync(dbPath + "-shm")) {
         fs.unlinkSync(dbPath + "-shm");
       }
+
+      console.log("[IPC] Database deleted, relaunching app...");
 
       // Relaunch the app
       app.relaunch();

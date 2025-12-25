@@ -75,20 +75,31 @@ export const useFinanceStore = defineStore("finance", () => {
       // Load years and periods
       ledgerYears.value = await window.electronAPI.getLedgerYears();
       ledgerPeriods.value = await window.electronAPI.getLedgerPeriods();
-      console.log("[Store] Years:", ledgerYears.value, "Periods:", ledgerPeriods.value.length);
+      console.log(
+        "[Store] Years:",
+        ledgerYears.value,
+        "Periods:",
+        ledgerPeriods.value.length
+      );
 
       // Load transactions and summary for current period
       if (currentPeriod.value) {
         await fetchTransactions();
         await fetchPeriodSummary();
-        console.log("[Store] Initial data loaded - transactions:", transactions.value.length);
+        console.log(
+          "[Store] Initial data loaded - transactions:",
+          transactions.value.length
+        );
       }
     } catch (e) {
       error.value = e instanceof Error ? e.message : "Failed to initialize";
       console.error("[Store] Initialization error:", e);
     } finally {
       isLoading.value = false;
-      console.log("[Store] Initialization complete, isLoading:", isLoading.value);
+      console.log(
+        "[Store] Initialization complete, isLoading:",
+        isLoading.value
+      );
     }
   }
 
@@ -130,11 +141,13 @@ export const useFinanceStore = defineStore("finance", () => {
         month
       );
       console.log(`[Store] currentPeriod set to:`, currentPeriod.value);
-      
+
       // Refresh periods list in case a new one was created
       ledgerPeriods.value = await window.electronAPI.getLedgerPeriods();
       await fetchTransactions();
-      console.log(`[Store] Transactions fetched: ${transactions.value.length} items`);
+      console.log(
+        `[Store] Transactions fetched: ${transactions.value.length} items`
+      );
       await fetchPeriodSummary();
       console.log(`[Store] Summary fetched:`, periodSummary.value);
     } catch (e) {
