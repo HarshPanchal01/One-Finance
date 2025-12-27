@@ -24,6 +24,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+release
 dist*
 *.local
 
@@ -38,21 +39,6 @@ dist*
 *.sln
 *.sw?
 
-# ----------------------------------------------------
-# Project-specific ignores (Vite + Vue + Electron)
-# ----------------------------------------------------
-
-# Build outputs (inside app folder)
-OneFinance/dist/
-OneFinance/dist-ssr/
-OneFinance/dist-electron/
-
-# Electron Builder release artifacts
-OneFinance/release/
-*.AppImage
-*.asar
-*.asar.unpacked
-
 # TypeScript incremental build info
 *.tsbuildinfo
 
@@ -63,4 +49,3 @@ OneFinance/release/
 
 # Tooling caches
 .eslintcache
-release

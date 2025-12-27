@@ -26,6 +26,9 @@ export const useFinanceStore = defineStore("finance", () => {
   const transactions = ref<TransactionWithCategory[]>([]);
   // Global recent transactions (always Global)
   const recentTransactions = ref<TransactionWithCategory[]>([]);
+  // Search results
+  const searchResults = ref<TransactionWithCategory[]>([]);
+  const isSearching = ref(false);
 
   // Summary data - always have default values
   const periodSummary = ref<PeriodSummary>({
@@ -304,8 +307,34 @@ export const useFinanceStore = defineStore("finance", () => {
       transactions.value = transactions.value.filter((t) => t.id !== id);
       await fetchRecentTransactions(5); // Update dashboard list
       await fetchPeriodSummary(); // Refresh summary
+      
+      // Also remove from search results if present
+      if (isSearching.value) {
+        searchResults.value = searchResults.value.filter((t) => t.id !== id);
+      }
     }
     return success;
+  }
+
+  async function searchTransactions(query: string) {
+    if (!query.trim()) {
+      isSearching.value = false;
+      searchResults.value = [];
+      return;
+    }
+    
+    isSearching.value = true;
+    try {
+      searchResults.value = await window.electronAPI.searchTransactions(query);
+    } catch (e) {
+      console.error("[Store] Search error:", e);
+      error.value = "Failed to search transactions";
+    }
+  }
+
+  function clearSearch() {
+    isSearching.value = false;
+    searchResults.value = [];
   }
 
   // ============================================
@@ -346,6 +375,8 @@ export const useFinanceStore = defineStore("finance", () => {
     categories,
     transactions,
     recentTransactions,
+    searchResults,
+    isSearching,
     periodSummary,
     incomeBreakdown,
     expenseBreakdown,
@@ -373,6 +404,8 @@ export const useFinanceStore = defineStore("finance", () => {
     addTransaction,
     editTransaction,
     removeTransaction,
+    searchTransactions,
+    clearSearch,
     fetchPeriodSummary,
   };
 });

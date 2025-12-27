@@ -10,6 +10,7 @@ const shortcuts = [
   { keys: ["Ctrl", "D"], description: "Go to Dashboard" },
   { keys: ["Ctrl", "T"], description: "Go to Transactions" },
   { keys: ["Ctrl", "G"], description: "Go to Categories" },
+  { keys: ["/"], description: "Go to Search Bar"}
 ];
 
 // Load DB path on mount

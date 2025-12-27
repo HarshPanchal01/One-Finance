@@ -144,6 +144,12 @@ const electronAPI = {
   deleteTransaction: (id: number): Promise<boolean> =>
     ipcRenderer.invoke("db:deleteTransaction", id),
 
+  searchTransactions: (
+    query: string,
+    limit?: number
+  ): Promise<TransactionWithCategory[]> =>
+    ipcRenderer.invoke("db:searchTransactions", query, limit),
+
   // ============================================
   // SUMMARY / DASHBOARD
   // ============================================
