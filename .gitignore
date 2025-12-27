@@ -24,8 +24,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
-dist-ssr
+dist*
 *.local
 
 # Editor directories and files
@@ -64,3 +63,4 @@ OneFinance/release/
 
 # Tooling caches
 .eslintcache
+release

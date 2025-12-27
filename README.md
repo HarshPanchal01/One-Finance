@@ -33,8 +33,8 @@ A local-first personal finance manager built with modern web technologies and El
 
 1.  Clone the repository:
     ```bash
-    git clone https://github.com/yourusername/one-finance.git
-    cd one-finance/OneFinance
+    git clone https://github.com/HarshPanchal01/One-Finance.git
+    cd One-Finance/
     ```
 
 2.  Install dependencies:
