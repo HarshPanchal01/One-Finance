@@ -42,9 +42,6 @@ const filteredTransactions = computed(() => {
     result = result.filter((t) => t.type === filterType.value);
   }
 
-  // Local Search (removed in favor of global search, but keeping logic if needed later)
-  // ...
-
   return result;
 });
 

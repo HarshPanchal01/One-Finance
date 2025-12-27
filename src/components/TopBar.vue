@@ -50,10 +50,10 @@ const highlightedText = computed(() => {
     .replace(/>/g, "&gt;");
 
   // Highlight filters
-  // Matches "is:", "label:", "category:" or "is:value", "label:value" etc.
+  // Matches "is:", "label:", "category:", "from:", "to:" or "is:value", "label:value" etc.
   text = text.replace(
-    /((?:\b(?:is|label|category):)(?:[\w-]+)?)/gi,
-    '<span class="text-primary-500 font-medium">$1</span>'
+    /((?:\b(?:is|label|category|from|to):)(?:[\w-]+)?)/gi,
+    '<span class="text-primary-500">$1</span>'
   );
 
   return text;
@@ -97,7 +97,7 @@ onUnmounted(() => {
         ref="searchInput"
         v-model="searchQuery"
         type="text"
-        placeholder="Search (e.g. 'Lunch', 'is:expense', 'label:Food')..."
+        placeholder="Search (e.g. 'Lunch', 'is:expense', 'from:2025-01-01')..."
         class="relative z-0 w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent text-transparent caret-gray-900 dark:caret-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
         @input="handleInput"
         @scroll="syncScroll"

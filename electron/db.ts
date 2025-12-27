@@ -341,6 +341,8 @@ export function searchTransactions(
   // Parse query for special filters
   let typeFilter: string | null = null;
   let categoryFilter: string | null = null;
+  let fromDate: string | null = null;
+  let toDate: string | null = null;
   
   // Extract "is:income" or "is:expense"
   const typeMatch = query.match(/\bis:(income|expense)\b/i);
@@ -355,6 +357,24 @@ export function searchTransactions(
     categoryFilter = categoryMatch[1];
     query = query.replace(categoryMatch[0], "");
   }
+
+  // Extract "from:YYYY-MM-DD"
+  const fromMatch = query.match(/\bfrom:(\d{4}-\d{2}-\d{2})\b/);
+  if (fromMatch) {
+    fromDate = fromMatch[1];
+    query = query.replace(fromMatch[0], "");
+  }
+
+  // Extract "to:YYYY-MM-DD"
+  const toMatch = query.match(/\bto:(\d{4}-\d{2}-\d{2})\b/);
+  if (toMatch) {
+    toDate = toMatch[1];
+    query = query.replace(toMatch[0], "");
+  }
+
+  // If only "to:" is provided, user wants it to be ignored (or not affect date range)
+  // If only "from:" is provided, we go from that to today.
+  // SQLite DATE comparisons work well with 'YYYY-MM-DD'.
 
   // Clean up the query string for text search
   const textQuery = query.trim();
@@ -384,11 +404,21 @@ export function searchTransactions(
     if (categoryFilter.toLowerCase() === 'none') {
         sql += " AND t.categoryId IS NULL";
     } else {
-        // Check if it's exact or like. GitHub style uses exact often but for user ease LIKE is better if they type partial.
-        // However, "label:Salary" usually implies searching for that specific label.
-        // Let's use LIKE for flexibility as requested "label:<CategoryName>"
         sql += " AND c.name LIKE ?";
         params.push(`%${categoryFilter}%`);
+    }
+  }
+
+  // Add date filters
+  if (fromDate) {
+    if (toDate) {
+      sql += " AND t.date BETWEEN ? AND ?";
+      params.push(fromDate, toDate);
+    } else {
+      // From date to today
+      const today = new Date().toISOString().split('T')[0];
+      sql += " AND t.date BETWEEN ? AND ?";
+      params.push(fromDate, today);
     }
   }
 
