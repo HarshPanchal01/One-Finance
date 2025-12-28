@@ -23,6 +23,7 @@ const showAmountPicker = ref(false);
 const amountPickerRef = ref<HTMLDivElement | null>(null);
 
 // Date Picker State
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const datePicker = ref<any>(null); // Use 'any' to avoid type issues with PrimeVue methods
 
 // Helper to check if a category is selected
@@ -145,19 +146,26 @@ onUnmounted(() => {
     class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-[1.050rem] flex items-center justify-center"
   >
     <div class="relative w-full max-w-xl group flex gap-2">
-      
       <!-- Search Input Container -->
       <div class="relative flex-grow flex items-center border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus-within:ring-2 focus-within:ring-primary-500 transition-all">
-        
         <!-- Label Picker Button -->
-        <div class="relative ml-1" ref="labelPickerRef">
-           <button
+        <div
+          ref="labelPickerRef"
+          class="relative ml-1"
+        >
+          <button
             class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center gap-1"
             title="Filter by Label"
             @click.stop="showLabelPicker = !showLabelPicker"
           >
-            <i class="pi pi-tags" :class="selectedCategoryIds.length > 0 ? 'text-primary-500' : ''" />
-            <span v-if="selectedCategoryIds.length > 0" class="text-xs font-bold bg-primary-100 text-primary-700 px-1 rounded">
+            <i
+              class="pi pi-tags"
+              :class="selectedCategoryIds.length > 0 ? 'text-primary-500' : ''"
+            />
+            <span
+              v-if="selectedCategoryIds.length > 0"
+              class="text-xs font-bold bg-primary-100 text-primary-700 px-1 rounded"
+            >
               {{ selectedCategoryIds.length }}
             </span>
           </button>
@@ -198,11 +206,13 @@ onUnmounted(() => {
                   :class="isCategorySelected(category.id) 
                     ? 'bg-primary-500 border-primary-500' 
                     : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'"
-                >
-                </div>
+                />
 
                 <!-- Icon & Name -->
-                 <i :class="['pi', category.icon]" :style="{ color: category.colorCode }" />
+                <i
+                  :class="['pi', category.icon]"
+                  :style="{ color: category.colorCode }"
+                />
                 <span class="text-gray-900 dark:text-white truncate flex-1">{{ category.name }}</span>
               </button>
             </div>
@@ -211,35 +221,50 @@ onUnmounted(() => {
 
         <!-- Date Picker Button/Popup -->
         <div class="relative ml-1">
-           <!-- Hidden DatePicker, triggered by button -->
-           <DatePicker 
-             ref="datePicker"
-             v-model="dateRange" 
-             selectionMode="range" 
-             :manualInput="false"
-             dateFormat="yy-mm-dd"
-             class="absolute opacity-0 w-1 h-1 overflow-hidden"
-           />
+          <!-- Hidden DatePicker, triggered by button -->
+          <DatePicker 
+            ref="datePicker"
+            v-model="dateRange" 
+            selection-mode="range" 
+            :manual-input="false"
+            date-format="yy-mm-dd"
+            class="absolute opacity-0 w-1 h-1 overflow-hidden"
+          />
            
-           <button
-              class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center gap-1"
-              title="Filter by Date"
-              @click="toggleDatePicker"
-            >
-              <i class="pi pi-calendar" :class="dateRange ? 'text-primary-500' : ''" />
-              <span v-if="dateRange" class="w-2 h-2 rounded-full bg-primary-500 absolute top-1 right-1"></span>
-            </button>
+          <button
+            class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center gap-1"
+            title="Filter by Date"
+            @click="toggleDatePicker"
+          >
+            <i
+              class="pi pi-calendar"
+              :class="dateRange ? 'text-primary-500' : ''"
+            />
+            <span
+              v-if="dateRange"
+              class="w-2 h-2 rounded-full bg-primary-500 absolute top-1 right-1"
+            />
+          </button>
         </div>
 
         <!-- Amount Picker -->
-        <div class="relative ml-1" ref="amountPickerRef">
-           <button
+        <div
+          ref="amountPickerRef"
+          class="relative ml-1"
+        >
+          <button
             class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center gap-1"
             title="Filter by Amount"
             @click.stop="showAmountPicker = !showAmountPicker"
           >
-            <i class="pi pi-dollar" :class="(minAmount !== null || maxAmount !== null) ? 'text-primary-500' : ''" />
-            <span v-if="(minAmount !== null || maxAmount !== null)" class="w-2 h-2 rounded-full bg-primary-500 absolute top-1 right-1"></span>
+            <i
+              class="pi pi-dollar"
+              :class="(minAmount !== null || maxAmount !== null) ? 'text-primary-500' : ''"
+            />
+            <span
+              v-if="(minAmount !== null || maxAmount !== null)"
+              class="w-2 h-2 rounded-full bg-primary-500 absolute top-1 right-1"
+            />
           </button>
 
           <!-- Amount Picker Dropdown -->
@@ -270,7 +295,7 @@ onUnmounted(() => {
         </div>
         
         <!-- Separator -->
-        <div class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-2"></div>
+        <div class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-2" />
 
         <!-- Search Input -->
         <input
@@ -301,7 +326,6 @@ onUnmounted(() => {
             <i class="pi pi-search" />
           </button>
         </div>
-
       </div>
     </div>
   </div>
