@@ -7,6 +7,7 @@ import type {
   CreateTransactionInput,
   PeriodSummary,
   CategoryBreakdown,
+  SearchOptions,
 } from "../types";
 
 export const useFinanceStore = defineStore("finance", () => {
@@ -316,8 +317,18 @@ export const useFinanceStore = defineStore("finance", () => {
     return success;
   }
 
-  async function searchTransactions(query: string) {
-    if (!query.trim()) {
+  async function searchTransactions(options: SearchOptions) {
+    // If no criteria provided, clear search
+    const hasCriteria = 
+      (options.text && options.text.trim()) || 
+      (options.categoryIds && options.categoryIds.length > 0) ||
+      options.fromDate || 
+      options.toDate ||
+      options.minAmount ||
+      options.maxAmount ||
+      options.type;
+
+    if (!hasCriteria) {
       isSearching.value = false;
       searchResults.value = [];
       return;
@@ -325,7 +336,7 @@ export const useFinanceStore = defineStore("finance", () => {
     
     isSearching.value = true;
     try {
-      searchResults.value = await window.electronAPI.searchTransactions(query);
+      searchResults.value = await window.electronAPI.searchTransactions(options);
     } catch (e) {
       console.error("[Store] Search error:", e);
       error.value = "Failed to search transactions";

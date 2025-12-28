@@ -334,51 +334,22 @@ export interface CreateTransactionInput {
   categoryId?: number;
 }
 
+export interface SearchOptions {
+  text?: string;
+  categoryIds?: number[];
+  fromDate?: string | null;
+  toDate?: string | null;
+  minAmount?: number | null;
+  maxAmount?: number | null;
+  type?: "income" | "expense" | null;
+}
+
 export function searchTransactions(
-  query: string,
+  options: SearchOptions,
   limit: number = 50
 ): TransactionWithCategory[] {
-  // Parse query for special filters
-  let typeFilter: string | null = null;
-  let categoryFilter: string | null = null;
-  let fromDate: string | null = null;
-  let toDate: string | null = null;
-  
-  // Extract "is:income" or "is:expense"
-  const typeMatch = query.match(/\bis:(income|expense)\b/i);
-  if (typeMatch) {
-    typeFilter = typeMatch[1].toLowerCase();
-    query = query.replace(typeMatch[0], "");
-  }
-
-  // Extract "label:Category" or "category:Category"
-  const categoryMatch = query.match(/\b(?:label|category):(\S+)\b/i);
-  if (categoryMatch) {
-    categoryFilter = categoryMatch[1];
-    query = query.replace(categoryMatch[0], "");
-  }
-
-  // Extract "from:YYYY-MM-DD"
-  const fromMatch = query.match(/\bfrom:(\d{4}-\d{2}-\d{2})\b/);
-  if (fromMatch) {
-    fromDate = fromMatch[1];
-    query = query.replace(fromMatch[0], "");
-  }
-
-  // Extract "to:YYYY-MM-DD"
-  const toMatch = query.match(/\bto:(\d{4}-\d{2}-\d{2})\b/);
-  if (toMatch) {
-    toDate = toMatch[1];
-    query = query.replace(toMatch[0], "");
-  }
-
-  // If only "to:" is provided, user wants it to be ignored (or not affect date range)
-  // If only "from:" is provided, we go from that to today.
-  // SQLite DATE comparisons work well with 'YYYY-MM-DD'.
-
-  // Clean up the query string for text search
-  const textQuery = query.trim();
-  const searchTerm = `%${textQuery}%`;
+  const { text = "", categoryIds = [], fromDate, toDate, minAmount, maxAmount, type } = options;
+  const searchTerm = `%${text.trim()}%`;
 
   let sql = `
     SELECT 
@@ -394,19 +365,16 @@ export function searchTransactions(
   const params: (string | number)[] = [];
 
   // Add type filter
-  if (typeFilter) {
+  if (type) {
     sql += " AND t.type = ?";
-    params.push(typeFilter);
+    params.push(type);
   }
 
-  // Add category filter
-  if (categoryFilter) {
-    if (categoryFilter.toLowerCase() === 'none') {
-        sql += " AND t.categoryId IS NULL";
-    } else {
-        sql += " AND c.name LIKE ?";
-        params.push(`%${categoryFilter}%`);
-    }
+  // Add category filters
+  if (categoryIds.length > 0) {
+    const placeholders = categoryIds.map(() => "?").join(",");
+    sql += ` AND t.categoryId IN (${placeholders})`;
+    params.push(...categoryIds);
   }
 
   // Add date filters
@@ -422,8 +390,18 @@ export function searchTransactions(
     }
   }
 
-  // Add text search if there is any remaining text
-  if (textQuery.length > 0) {
+  // Add amount filters
+  if (minAmount !== undefined && minAmount !== null) {
+    sql += " AND t.amount >= ?";
+    params.push(minAmount);
+  }
+  if (maxAmount !== undefined && maxAmount !== null) {
+    sql += " AND t.amount <= ?";
+    params.push(maxAmount);
+  }
+
+  // Add text search
+  if (text.trim().length > 0) {
     sql += ` AND (
       t.title LIKE ? 
       OR COALESCE(t.notes, '') LIKE ?

@@ -50,6 +50,16 @@ export interface PeriodSummary {
   transactionCount: number
 }
 
+export interface SearchOptions {
+  text?: string;
+  categoryIds?: number[];
+  fromDate?: string | null;
+  toDate?: string | null;
+  minAmount?: number | null;
+  maxAmount?: number | null;
+  type?: "income" | "expense" | null;
+}
+
 export interface CategoryBreakdown {
   categoryId: number | null
   categoryName: string

@@ -57,6 +57,16 @@ export interface CategoryBreakdown {
   count: number;
 }
 
+export interface SearchOptions {
+  text?: string;
+  categoryIds?: number[];
+  fromDate?: string | null;
+  toDate?: string | null;
+  minAmount?: number | null;
+  maxAmount?: number | null;
+  type?: "income" | "expense" | null;
+}
+
 // The API exposed to the renderer process
 const electronAPI = {
   // ============================================
@@ -145,10 +155,10 @@ const electronAPI = {
     ipcRenderer.invoke("db:deleteTransaction", id),
 
   searchTransactions: (
-    query: string,
+    options: SearchOptions,
     limit?: number
   ): Promise<TransactionWithCategory[]> =>
-    ipcRenderer.invoke("db:searchTransactions", query, limit),
+    ipcRenderer.invoke("db:searchTransactions", options, limit),
 
   // ============================================
   // SUMMARY / DASHBOARD

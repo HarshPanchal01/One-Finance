@@ -23,6 +23,7 @@ import {
   updateTransaction,
   deleteTransaction,
   searchTransactions,
+  type SearchOptions,
   // Summary
   getPeriodSummary,
   getCategoryBreakdown,
@@ -151,8 +152,8 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(
     "db:searchTransactions",
-    async (_event, query: string, limit?: number) => {
-      return searchTransactions(query, limit);
+    async (_event, options: SearchOptions, limit?: number) => {
+      return searchTransactions(options, limit);
     }
   );
 
