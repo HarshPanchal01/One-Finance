@@ -11,11 +11,12 @@ import DashboardView from "./views/DashboardView.vue";
 import TransactionsView from "./views/TransactionsView.vue";
 import CategoriesView from "./views/CategoriesView.vue";
 import SettingsView from "./views/SettingsView.vue";
+import AccountsView from "./views/accounts_view/AccountsView.vue";
 
 const store = useFinanceStore();
 
 // Current view
-type ViewName = "dashboard" | "transactions" | "categories" | "settings";
+type ViewName = "dashboard" | "transactions" | "categories" | "settings" | "accounts";
 const currentView = ref<ViewName>("dashboard");
 
 // Quick add transaction modal
@@ -112,6 +113,7 @@ function handleKeydown(e: KeyboardEvent) {
           <TransactionsView v-else-if="currentView === 'transactions'" />
           <CategoriesView v-else-if="currentView === 'categories'" />
           <SettingsView v-else-if="currentView === 'settings'" />
+          <AccountsView v-else-if="currentView === 'accounts'" />
         </template>
       </main>
     </div>

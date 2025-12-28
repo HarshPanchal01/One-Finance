@@ -24,6 +24,7 @@ const newYear = ref(new Date().getFullYear());
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: "pi-home" },
   { id: "transactions", label: "Transactions", icon: "pi-list" },
+  { id: "accounts", label: "Accounts", icon: "pi-wallet" },
   { id: "categories", label: "Categories", icon: "pi-tags" },
   { id: "settings", label: "Settings", icon: "pi-cog" },
 ];
