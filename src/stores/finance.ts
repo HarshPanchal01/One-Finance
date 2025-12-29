@@ -180,9 +180,13 @@ export const useFinanceStore = defineStore("finance", () => {
   // ACTIONS - Accounts
   // ============================================
 
-  async function fetchAccounts(){
-    accounts.value = await window.electronAPI.getAccounts();
-  }
+  // async function fetchAccounts(){
+  //   accounts.value = await window.electronAPI.getAccounts();
+  // }
+
+  // async function fetchAccountTypes(){
+  //   accountTypes.value = await window.electronAPI.getAccountTypes();
+  // }
 
   // ============================================
   // ACTIONS - Categories

@@ -106,7 +106,7 @@ export function initializeDatabase(): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS accountType (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      type TEXT NOT NULL,
+      type TEXT NOT NULL
     )
   `);
 
@@ -141,7 +141,7 @@ export function initializeDatabase(): void {
 
   // Seed default account types if none exist
   const accountTypesCount = db
-    .prepare("SELECT COUNT(*) as count FROM accountTypes")
+    .prepare("SELECT COUNT(*) as count FROM accountType")
     .get() as { count: number };
   if (accountTypesCount.count === 0) {
     seedDefaultAccountData();
@@ -186,7 +186,7 @@ function seedDefaultAccountData(): void{
   ];
 
   const insertAccountType = db.prepare(
-    "INSERT INTO accountTypes (type) VALUES (?)"
+    "INSERT INTO accountType (type) VALUES (?)"
   );
 
   let result = null;
@@ -197,7 +197,7 @@ function seedDefaultAccountData(): void{
   let id = result.lastInsertRowid;
 
   const insertAccount = db.prepare(
-    "INSERT INTO accountTypes (accountName, institutionName, startingBalance, accountTypeId, isDefault) VALUES (?,?,?,?,?)"
+    "INSERT INTO accountType (accountName, institutionName, startingBalance, accountTypeId, isDefault) VALUES (?,?,?,?,?)"
   );
 
   for (const acc of defaultAccounts){

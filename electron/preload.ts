@@ -1,6 +1,5 @@
 import { Account, AccountType } from "@/types";
 import { ipcRenderer, contextBridge } from "electron";
-import { deleteAccountByAccountId, editAccount, editAccountType, getAccountById, getAccountTypeById, getAccountTypes, insertAccount, insertAccountType, resetDefault } from "./db";
 
 // Type definitions for our database operations
 export interface LedgerPeriod {
