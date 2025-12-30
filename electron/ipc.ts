@@ -30,7 +30,13 @@ import {
   // DB paths and instance
   dbPath,
   closeDb,
+  getAccounts,
+  getAccountTypes,
+  deleteAccountById,
+  insertAccount,
+  editAccount,
 } from "./db";
+import { Account } from "@/types";
 
 /**
  * Register all IPC handlers for database operations
@@ -77,6 +83,30 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle("db:getOrCreateCurrentPeriod", async () => {
     return getOrCreateCurrentPeriod();
+  });
+
+  // ============================================
+  // ACCOUNTS HANDLERS
+  // ============================================
+
+  ipcMain.handle("db:getAccounts", async () =>{
+    return getAccounts();
+  });
+
+  ipcMain.handle("db:getAccountTypes", async () =>{
+    return getAccountTypes();
+  });
+
+  ipcMain.handle("db:deleteAccountById", async (_event, id: number) =>{
+    return deleteAccountById(id);
+  });
+
+  ipcMain.handle("db:insertAccount", async (_event, account: Account) => {
+    return insertAccount(account);
+  });
+
+  ipcMain.handle("db:editAccount", async (_event, account: Account) => {
+    return editAccount(account);
   });
 
   // ============================================

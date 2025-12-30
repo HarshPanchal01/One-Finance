@@ -78,6 +78,13 @@ export const useFinanceStore = defineStore("finance", () => {
       await fetchCategories();
       console.log("[Store] Categories loaded:", categories.value.length);
 
+      // Load accounts they are always needed
+      await fetchAccounts();
+      await fetchAccountTypes();
+
+      console.log("[Store] Accounts loaded:", accounts.value.length);
+      console.log("[Store] AccountTypes loaded:", accountTypes.value.length);
+
       // Load years and periods
       ledgerYears.value = await window.electronAPI.getLedgerYears();
       ledgerPeriods.value = await window.electronAPI.getLedgerPeriods();
@@ -180,13 +187,25 @@ export const useFinanceStore = defineStore("finance", () => {
   // ACTIONS - Accounts
   // ============================================
 
-  // async function fetchAccounts(){
-  //   accounts.value = await window.electronAPI.getAccounts();
-  // }
+  async function fetchAccounts(){
+    accounts.value = await window.electronAPI.getAccounts();
+  }
 
-  // async function fetchAccountTypes(){
-  //   accountTypes.value = await window.electronAPI.getAccountTypes();
-  // }
+  async function fetchAccountTypes(){
+    accountTypes.value = await window.electronAPI.getAccountTypes();
+  }
+
+  async function addAccount(account: Account){
+    await window.electronAPI.insertAccount(account);
+  }
+
+  async function editAccount(account: Account){
+    await window.electronAPI.editAccount(account);
+  }
+
+  async function removeAccount(id: number){
+    await window.electronAPI.deleteAccountById(id);
+  }
 
   // ============================================
   // ACTIONS - Categories
@@ -364,6 +383,8 @@ export const useFinanceStore = defineStore("finance", () => {
     ledgerYears,
     ledgerPeriods,
     categories,
+    accounts,
+    accountTypes,
     transactions,
     recentTransactions,
     periodSummary,
@@ -394,5 +415,10 @@ export const useFinanceStore = defineStore("finance", () => {
     editTransaction,
     removeTransaction,
     fetchPeriodSummary,
+    fetchAccounts,
+    fetchAccountTypes,
+    removeAccount,
+    addAccount,
+    editAccount,
   };
 });

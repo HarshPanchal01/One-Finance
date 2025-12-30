@@ -175,6 +175,7 @@ function seedDefaultCategories(): void {
 }
 
 function seedDefaultAccountData(): void{
+  
   const defaultAccountTypes = [
     {type: "Cash"},
     {type: "Chequing"},
@@ -182,7 +183,7 @@ function seedDefaultAccountData(): void{
   ];
 
   const defaultAccounts = [
-    {accountName: "Cash", institutionName: null, startingBalance: 0, accountTypeId: 0, isDefault: true},
+    {accountName: "One Finance", institutionName: null, startingBalance: 0, accountTypeId: 0, isDefault: true},
   ];
 
   const insertAccountType = db.prepare(
@@ -194,14 +195,14 @@ function seedDefaultAccountData(): void{
     result = insertAccountType.run(accType.type);
   }
 
-  let id = result.lastInsertRowid;
+  let id = result?.lastInsertRowid ?? 0; 
 
   const insertAccount = db.prepare(
-    "INSERT INTO accountType (accountName, institutionName, startingBalance, accountTypeId, isDefault) VALUES (?,?,?,?,?)"
+    "INSERT INTO accounts (accountName, institutionName, startingBalance, accountTypeId, isDefault) VALUES (?,?,?,?,?)"
   );
 
   for (const acc of defaultAccounts){
-    insertAccount.run(acc.accountName, acc.institutionName, acc.startingBalance, id, acc.isDefault);
+    insertAccount.run(acc.accountName, acc.institutionName, acc.startingBalance, id, Number(acc.isDefault));
   }
   console.log("Account Data Seeded")
 }
@@ -332,7 +333,7 @@ export function insertAccount(account: Account): void{
   }
 
   const insert = db.prepare("INSERT INTO accounts (accountName, institutionName, startingBalance, accountTypeId, isDefault) VALUES (?,?,?,?,?)");
-  insert.run(account.accountName, account.institutionName, account.startingBalance, account.accountTypeId, account.isDefault);
+  insert.run(account.accountName, account.institutionName, account.startingBalance, account.accountTypeId, Number(account.isDefault));
 }
 
 export function insertAccountType(accountType: AccountType): void{
@@ -345,6 +346,11 @@ export function resetDefault(): void {
 }
 
 export function editAccount(account: Account): void {
+
+  if (account.isDefault){
+    resetDefault();
+  }
+
   db.prepare(`
     UPDATE accounts
     SET
@@ -376,11 +382,11 @@ export function editAccountType(accountType: AccountType): void{
   );
 }
 
-export function deleteAccountByAccountId(accountId: number): void {
+export function deleteAccountById(accountId: number): void {
   db.prepare("DELETE FROM accounts WHERE id = ?").run(accountId);
 }
 
-export function deleteAccountTypeByAccountTypeId(accountTypeId: number): void {
+export function deleteAccountTypeById(accountTypeId: number): void {
   db.prepare("DELETE FROM accountType WHERE id = ?").run(accountTypeId);
 }
 

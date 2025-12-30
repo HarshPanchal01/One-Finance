@@ -130,7 +130,7 @@ const electronAPI = {
   resetDefault: (): Promise<void> => ipcRenderer.invoke("db:resetDefault"),
   editAccount: (account: Account): Promise<Account | undefined> => ipcRenderer.invoke("db:editAccount", account),
   editAccountType: (accountType: AccountType): Promise<AccountType | undefined> => ipcRenderer.invoke("db:editAccountType", accountType),
-  deleteAccountByAccountId: (id: number): Promise<boolean> => ipcRenderer.invoke("db:deleteAccountByAccountId", id),
+  deleteAccountById: (id: number): Promise<boolean> => ipcRenderer.invoke("db:deleteAccountById", id),
   deleteAccountTypeById: (id: number): Promise<boolean> => ipcRenderer.invoke("db:deleteAccountTypeById", id),
 
   // ============================================
