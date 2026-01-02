@@ -11,7 +11,7 @@
         </p>
       </div>
       <button
-        class="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+        class="inline-flex items-center px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors"
         @click="openDialog = true"
       >
         <i class="pi pi-plus mr-2" />
@@ -47,6 +47,7 @@
               type="text"
               class="w-full border px-3 py-2 rounded"
               required
+              placeholder="Type account name"
             />
           </div>
 
@@ -56,18 +57,30 @@
               v-model="form.institutionName"
               type="text"
               class="w-full border px-3 py-2 rounded"
+              placeholder="Type institution name"
             />
           </div>
+          
+          <!-- Amount -->
           <div>
-            <label class="block text-sm font-medium mb-1">Starting Balance</label>
-            <input
-              v-model.number="form.startingBalance"
-              type="number"
-              min="0"
-              step="0.01"
-              class="w-full border px-3 py-2 rounded"
-              required
-            />
+            <label
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Amount
+            </label>
+            <div class="relative">
+              <span
+                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+              >$</span>
+              <input
+                v-model.number="form.startingBalance"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                class="w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Account Type</label>
@@ -76,12 +89,6 @@
               class="w-full border px-3 py-2 rounded"
               required
             >
-              <option
-                value=""
-                disabled
-              >
-                Select an account type
-              </option>
               <option
                 v-for="type in state.accountTypeArray"
                 :key="type.id"
@@ -93,15 +100,16 @@
           </div>
           <div class="flex items-center space-x-2">
             <input
-              id="isDefault"
-              v-model="form.isDefault"
               type="checkbox"
-              class="h-4 w-4 text-blue-500 border-gray-300 rounded"
+              v-model="form.isDefault"
+              class="h-4 w-4 appearance-none rounded-full border border-gray-400
+                    checked:bg-primary-500 checked:bg-primary-500 hover:bg-primary-300
+                    "
             />
             <label
               for="isDefault"
               class="text-sm font-medium"
-            >Is Default</label>
+            >Set as Default</label>
           </div>
 
           <div class="flex justify-end space-x-2 mt-4">
@@ -123,6 +131,8 @@
       </div>
     </div>
   </div>
+  <ConfirmationModal ref="confirmModal" />
+  <ErrorModal ref="errorModal" />
 </template>
 
 <script setup lang="ts">
@@ -130,8 +140,16 @@ import { reactive, ref } from 'vue';
 import { useFinanceStore } from '@/stores/finance';
 import AccountListView from './components/AccountListView.vue';
 import { Account } from '@/types';
+import ConfirmationModal from '@/components/ConfirmationModal.vue';
+import ErrorModal from '@/components/ErrorModal.vue';
 
 const store = useFinanceStore();
+
+//Deep copy because the compiler is stupid and can't handle nested reactives
+const accounts = store.accounts.filter(() => true);
+const accountsTypeArray = store.accountTypes.filter(() => true);
+const confirmModal = ref<InstanceType<typeof ConfirmationModal>>();
+const errorModal = ref<InstanceType<typeof ErrorModal>>();
 
 const openDialog = ref(false);
 
@@ -139,8 +157,8 @@ let isEdit = false;
 let accountEditId = 0;
 
 const state = reactive({
-  accountArray: store.accounts,
-  accountTypeArray: store.accountTypes
+  accountArray: accounts,
+  accountTypeArray: accountsTypeArray
 });
 
 const form = reactive({
@@ -154,12 +172,16 @@ const form = reactive({
 
 function closeDialog() {
   openDialog.value = false;
-  form.accountName = '';
-  form.institutionName = '';
-  form.startingBalance = 0;
-  form.accountType = 0;
-  form.isDefault = false;
   isEdit = false;
+  accountEditId = 0;
+  // Reset form object entirely
+  Object.assign(form, {
+    accountName: '',
+    institutionName: '',
+    startingBalance: 0,
+    accountType: 0,
+    isDefault: false
+  });
 }
 
 async function submitForm() {
@@ -187,7 +209,7 @@ async function submitForm() {
   closeDialog();
 
   await store.fetchAccounts(); 
-  state.accountArray = store.accounts; 
+  state.accountArray = store.accounts.filter(() => true);; 
 
   console.log(store.accounts);
 
@@ -205,17 +227,28 @@ function editAccount(account: Account) {
   accountEditId = account.id;
 }
 
-async function deleteAccount(account: Account){ 
+async function deleteAccount(account: Account) {
 
   if (store.accounts.length <= 1) {
-    alert("You must have at least one account.");
+    await errorModal.value?.openConfirmation({
+      title: 'Cannot Delete Account',
+      message: 'At least one account must exist in the system.',
+      confirmText: 'Okay'
+    });
     return;
   }
 
-  if (confirm("Delete this account? This cannot be undone.")) { 
-    await store.removeAccount(account.id); 
-    await store.fetchAccounts(); 
-    state.accountArray = store.accounts; 
-    } 
+  const confirmed = await confirmModal.value?.openConfirmation({
+    title: 'Delete Account?',
+    message: `Are you sure you want to delete "${account.accountName}"? This cannot be undone.`,
+    cancelText: 'Cancel',
+    confirmText: 'Delete'
+  });
+
+  if (confirmed) {
+    await store.removeAccount(account.id);
+    await store.fetchAccounts();
+    state.accountArray = store.accounts.filter(() => true);
+  }
 }
 </script>

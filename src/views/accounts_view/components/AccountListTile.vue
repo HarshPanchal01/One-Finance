@@ -10,7 +10,7 @@
         {{ props.institutionName }} • Type: {{ accountType }} 
         <span
           v-if="props.isDefault"
-          class="ml-2 px-1.5 py-0.5 text-xs font-semibold text-white bg-blue-500 rounded"
+          class="ml-2 px-1.5 py-0.5 text-xs font-semibold text-white bg-primary-500 rounded"
         >Default</span>
       </p>
       <p class="text-sm text-gray-700 mt-1">
@@ -20,17 +20,19 @@
 
     <div class="flex space-x-2">
       <button
-        class="px-3 py-1 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded transition-colors"
-        @click="handleEditClick"
-      >
-        Edit
+          class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 hover:text-primary-500 transition-colors"
+          title="Edit"
+          @click="handleEditClick"
+        >
+          <i class="pi pi-pencil text-sm" />
       </button>
       <button
-        class="px-3 py-1 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded transition-colors"
-        @click="handleDeleteClick"
-      >
-        Delete
-      </button>
+          class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 hover:text-expense transition-colors"
+          title="Delete"
+          @click="handleDeleteClick"
+        >
+          <i class="pi pi-trash text-sm" />
+        </button>
     </div>
   </div>
 </template>

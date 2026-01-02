@@ -2,8 +2,12 @@
 import { ref } from "vue";
 import { useFinanceStore } from "../stores/finance";
 import type { Category } from "../types";
+import ConfirmationModal from "@/components/ConfirmationModal.vue";
+import ErrorModal from "@/components/ErrorModal.vue";
 
 const store = useFinanceStore();
+
+const confirmModal = ref<InstanceType<typeof ConfirmationModal>>();
 
 // Modal state
 const showModal = ref(false);
@@ -114,9 +118,13 @@ async function saveCategory() {
 // Delete category
 async function deleteCategory(id: number) {
   if (
-    confirm(
-      "Delete this category? Transactions using it will become uncategorized."
-    )
+    await confirmModal.value?.openConfirmation({
+      title: "Delete Category",
+      message: "Are you sure you want to delete this category?",
+      cancelText: "Cancel",
+      confirmText: "Delete",
+    }
+  )
   ) {
     await store.removeCategory(id);
   }
@@ -339,4 +347,7 @@ function closeModal() {
       </div>
     </Teleport>
   </div>
+  <ConfirmationModal ref="confirmModal" />
+  <ErrorModal ref="errorModal" />
+  
 </template>
