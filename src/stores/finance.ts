@@ -188,7 +188,18 @@ export const useFinanceStore = defineStore("finance", () => {
   // ============================================
 
   async function fetchAccounts(){
-    accounts.value = await window.electronAPI.getAccounts();
+    const accountsRaw = await window.electronAPI.getAccounts();
+    const transactionsRaw = await window.electronAPI.getTransactions();
+
+    accountsRaw.forEach(account => {
+      const accountTransactions = transactionsRaw.filter(t => t.accountId === account.id);
+      account.balance = accountTransactions.reduce((sum, t) => {
+        return t.type === 'income' ? sum + t.amount : sum - t.amount;
+      }, 0);
+    });
+
+    accounts.value = accountsRaw;
+
   }
 
   async function fetchAccountTypes(){

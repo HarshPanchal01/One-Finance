@@ -14,7 +14,7 @@
         >Default</span>
       </p>
       <p class="text-sm text-gray-700 mt-1">
-        Balance: ${{ props.startingBalance.toLocaleString() }}
+        Balance: ${{ props.balance?.toFixed(2) ?? props.startingBalance.toFixed(2) }}
       </p>
     </div>
 
@@ -46,6 +46,7 @@ import { computed } from 'vue';
         accountName: string
         institutionName: string
         startingBalance: number
+        balance?: number
         accountTypeId: number
         isDefault: boolean
     }

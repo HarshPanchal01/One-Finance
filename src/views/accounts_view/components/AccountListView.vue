@@ -5,6 +5,7 @@
       :key="account.id"
       :account-name="account.accountName"
       :starting-balance="account.startingBalance"
+      :balance="account.balance"
       :institution-name="account.institutionName ?? ''"
       :account-type-id="account.accountTypeId"
       :is-default="account.isDefault"
