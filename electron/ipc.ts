@@ -22,6 +22,8 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  searchTransactions,
+  type SearchOptions,
   // Summary
   getPeriodSummary,
   getCategoryBreakdown,
@@ -147,6 +149,13 @@ export function registerIpcHandlers(): void {
   ipcMain.handle("db:deleteTransaction", async (_event, id: number) => {
     return deleteTransaction(id);
   });
+
+  ipcMain.handle(
+    "db:searchTransactions",
+    async (_event, options: SearchOptions, limit?: number) => {
+      return searchTransactions(options, limit);
+    }
+  );
 
   // ============================================
   // SUMMARY / DASHBOARD HANDLERS

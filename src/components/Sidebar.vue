@@ -77,8 +77,8 @@ async function selectPeriod(year: number, month: number) {
 
 // Handle navigation click
 async function handleNavClick(viewId: string) {
-  if (viewId === "transactions") {
-    // Top-level Transactions click = Global View
+  if (viewId === "transactions" || viewId === "dashboard") {
+    // Top-level click = Global View
     await store.clearPeriod();
   }
   emit("navigate", viewId);
