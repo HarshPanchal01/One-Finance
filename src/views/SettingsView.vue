@@ -1,16 +1,21 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import ConfirmationModal from "@/components/ConfirmationModal.vue";
+import ErrorModal from "@/components/ErrorModal.vue";
 
 const appVersion = "0.0.1";
 const dbPath = ref("");
+const confirmModal = ref<InstanceType<typeof ConfirmationModal>>();
+const errorModal = ref<InstanceType<typeof ErrorModal>>();
 
 // Keyboard shortcuts
 const shortcuts = [
   { keys: ["Ctrl", "N"], description: "New transaction" },
   { keys: ["Ctrl", "D"], description: "Go to Dashboard" },
   { keys: ["Ctrl", "T"], description: "Go to Transactions" },
-  { keys: ["Ctrl", "G"], description: "Go to Categories" },
-  { keys: ["Ctrl", "A"], description: "Go to Accounts" },
+  { keys: ["Ctrl", "Shift", "C"], description: "Go to Categories" },
+  { keys: ["Ctrl", "Shift", "A"], description: "Go to Accounts" },
+  { keys: ["Ctrl", "Shift", "S"], description: "Go to Settings" },
   { keys: ["/"], description: "Go to Search Bar"}
 ];
 
@@ -26,19 +31,28 @@ async function openDbLocation() {
 
 // Delete database (dev only)
 async function deleteDatabase() {
-  if (
-    confirm(
-      "⚠️ DELETE DATABASE?\n\nThis will permanently delete all your financial data including:\n- All transactions\n- All categories\n- All ledger periods\n\nThe app will close after deletion. Are you sure?"
-    )
-  ) {
+  const confirmed = await confirmModal.value?.openConfirmation({
+    title: "⚠️ DELETE DATABASE?",
+    message: "This will permanently delete all your financial data including:\n- All transactions\n- All accounts\n- All ledger periods.\n\nThe app will close after deletion. Are you sure?",
+    confirmText: "Delete",
+    cancelText: "Cancel",
+  });
+
+  if (confirmed) {
     const success = await window.electronAPI.deleteDatabase();
     if (success) {
-      alert(
-        "Database deleted. Please restart the application (run npm run dev)."
-      );
+      await errorModal.value?.openConfirmation({
+        title: "Database Deleted",
+        message: "Database deleted. Please restart the application (run npm run dev).",
+        confirmText: "Okay",
+      });
       window.close();
     } else {
-      alert("Failed to delete database. Please try closing the app first.");
+      await errorModal.value?.openConfirmation({
+        title: "Error",
+        message: "Failed to delete database. Please try closing the app first.",
+        confirmText: "Okay",
+      });
     }
   }
 }
@@ -194,4 +208,6 @@ async function deleteDatabase() {
       </div>
     </div>
   </div>
+  <ConfirmationModal ref="confirmModal" />
+  <ErrorModal ref="errorModal" />
 </template>

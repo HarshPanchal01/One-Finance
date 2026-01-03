@@ -219,6 +219,7 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener("keydown", handleKeydown);
   window.removeEventListener("click", handleClickOutside);
+  store.clearSearch();
 });
 </script>
 

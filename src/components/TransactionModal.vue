@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { useFinanceStore } from "../stores/finance";
 import type { Transaction } from "../types";
 
@@ -16,6 +16,21 @@ const emit = defineEmits<{
 }>();
 
 const store = useFinanceStore();
+
+// Handle Esc key
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === "Escape" && props.visible) {
+    emit("close");
+  }
+}
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleKeydown);
+});
 
 // Form data
 const form = ref({

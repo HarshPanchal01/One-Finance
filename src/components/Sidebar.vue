@@ -2,6 +2,7 @@
 import { ref, computed, watch } from "vue";
 import { useFinanceStore } from "../stores/finance";
 import { getMonthName } from "../types";
+import ConfirmationModal from "@/components/ConfirmationModal.vue";
 
 const props = defineProps<{
   currentView: string;
@@ -19,6 +20,7 @@ const expandedYears = ref<Set<number>>(new Set());
 // Modal states
 const showAddYearModal = ref(false);
 const newYear = ref(new Date().getFullYear());
+const confirmModal = ref<InstanceType<typeof ConfirmationModal>>();
 
 // Navigation items
 const navItems = [
@@ -105,7 +107,14 @@ async function addYear() {
 
 // Delete year
 async function deleteYear(year: number) {
-  if (confirm(`Delete ${year} and all its data? This cannot be undone.`)) {
+  const confirmed = await confirmModal.value?.openConfirmation({
+    title: "Delete Year",
+    message: `Are you sure you want to delete ${year} and all its data? This cannot be undone.`,
+    cancelText: "Cancel",
+    confirmText: "Delete",
+  });
+
+  if (confirmed) {
     await store.deleteYear(year);
     expandedYears.value.delete(year);
   }
@@ -312,5 +321,6 @@ async function deleteYear(year: number) {
         </div>
       </div>
     </Teleport>
+    <ConfirmationModal ref="confirmModal" />
   </aside>
 </template>

@@ -73,13 +73,23 @@ function handleKeydown(e: KeyboardEvent) {
         e.preventDefault();
         currentView.value = "transactions";
         break;
-      case "g":
-        e.preventDefault();
-        currentView.value = "categories";
+      case "c":
+        if (e.shiftKey) {
+          e.preventDefault();
+          currentView.value = "categories";
+        }
         break;
       case "a":
-        e.preventDefault();
-        currentView.value = "accounts";
+        if (e.shiftKey) {
+          e.preventDefault();
+          currentView.value = "accounts";
+        }
+        break;
+      case "s":
+        if (e.shiftKey) {
+          e.preventDefault();
+          currentView.value = "settings";
+        }
         break;
     }
   }
@@ -97,7 +107,7 @@ function handleKeydown(e: KeyboardEvent) {
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Top Bar -->
-      <TopBar />
+      <TopBar v-if="currentView === 'transactions'" />
 
       <!-- Content Area -->
       <main class="flex-1 overflow-y-auto p-6">
