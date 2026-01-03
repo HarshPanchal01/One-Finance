@@ -9,6 +9,7 @@ import type {
   CreateTransactionInput,
   PeriodSummary,
   CategoryBreakdown,
+  SearchOptions,
 } from "../types";
 
 export const useFinanceStore = defineStore("finance", () => {
@@ -34,6 +35,9 @@ export const useFinanceStore = defineStore("finance", () => {
   const transactions = ref<TransactionWithCategory[]>([]);
   // Global recent transactions (always Global)
   const recentTransactions = ref<TransactionWithCategory[]>([]);
+  // Search results
+  const searchResults = ref<TransactionWithCategory[]>([]);
+  const isSearching = ref(false);
 
   // Summary data - always have default values
   const periodSummary = ref<PeriodSummary>({
@@ -355,8 +359,45 @@ export const useFinanceStore = defineStore("finance", () => {
       transactions.value = transactions.value.filter((t) => t.id !== id);
       await fetchRecentTransactions(5); // Update dashboard list
       await fetchPeriodSummary(); // Refresh summary
+      
+      // Also remove from search results if present
+      if (isSearching.value) {
+        searchResults.value = searchResults.value.filter((t) => t.id !== id);
+      }
     }
     return success;
+  }
+
+  async function searchTransactions(options: SearchOptions) {
+    // If no criteria provided, clear search
+    const hasCriteria = 
+      (options.text && options.text.trim()) || 
+      (options.categoryIds && options.categoryIds.length > 0) ||
+      (options.accountIds && options.accountIds.length > 0) ||
+      options.fromDate || 
+      options.toDate ||
+      options.minAmount ||
+      options.maxAmount ||
+      options.type;
+
+    if (!hasCriteria) {
+      isSearching.value = false;
+      searchResults.value = [];
+      return;
+    }
+    
+    isSearching.value = true;
+    try {
+      searchResults.value = await window.electronAPI.searchTransactions(options);
+    } catch (e) {
+      console.error("[Store] Search error:", e);
+      error.value = "Failed to search transactions";
+    }
+  }
+
+  function clearSearch() {
+    isSearching.value = false;
+    searchResults.value = [];
   }
 
   // ============================================
@@ -399,6 +440,8 @@ export const useFinanceStore = defineStore("finance", () => {
     accountTypes,
     transactions,
     recentTransactions,
+    searchResults,
+    isSearching,
     periodSummary,
     incomeBreakdown,
     expenseBreakdown,
@@ -426,6 +469,8 @@ export const useFinanceStore = defineStore("finance", () => {
     addTransaction,
     editTransaction,
     removeTransaction,
+    searchTransactions,
+    clearSearch,
     fetchPeriodSummary,
     fetchAccounts,
     fetchAccountTypes,

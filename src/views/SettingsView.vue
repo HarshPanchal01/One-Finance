@@ -11,6 +11,7 @@ const shortcuts = [
   { keys: ["Ctrl", "T"], description: "Go to Transactions" },
   { keys: ["Ctrl", "G"], description: "Go to Categories" },
   { keys: ["Ctrl", "A"], description: "Go to Accounts" },
+  { keys: ["/"], description: "Go to Search Bar"}
 ];
 
 // Load DB path on mount
@@ -82,7 +83,7 @@ async function deleteDatabase() {
           :key="shortcut.description"
           class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
         >
-          <span class="text-gray-600 dark:text-gray-300">{{
+          <span class="text-gray-600 dark:text-gray-300">{{ 
             shortcut.description
           }}</span>
           <div class="flex items-center space-x-1">

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import { useFinanceStore } from "./stores/finance";
 
 // Components
 import Sidebar from "./components/Sidebar.vue";
+import TopBar from "./components/TopBar.vue";
 import TransactionModal from "./components/TransactionModal.vue";
 
 // Views
@@ -18,6 +19,16 @@ const store = useFinanceStore();
 // Current view
 type ViewName = "dashboard" | "transactions" | "categories" | "settings" | "accounts";
 const currentView = ref<ViewName>("dashboard");
+
+// Watch for search active
+watch(
+  () => store.isSearching,
+  (isSearching) => {
+    if (isSearching) {
+      currentView.value = "transactions";
+    }
+  }
+);
 
 // Quick add transaction modal
 const showQuickAddModal = ref(false);
@@ -85,6 +96,9 @@ function handleKeydown(e: KeyboardEvent) {
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Top Bar -->
+      <TopBar />
+
       <!-- Content Area -->
       <main class="flex-1 overflow-y-auto p-6">
         <!-- Loading State -->

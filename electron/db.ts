@@ -569,6 +569,96 @@ export interface CreateTransactionInput {
   accountId?: number;
 }
 
+export interface SearchOptions {
+  text?: string;
+  categoryIds?: number[];
+  accountIds?: number[];
+  fromDate?: string | null;
+  toDate?: string | null;
+  minAmount?: number | null;
+  maxAmount?: number | null;
+  type?: "income" | "expense" | null;
+}
+
+export function searchTransactions(
+  options: SearchOptions,
+  limit: number = 50
+): TransactionWithCategory[] {
+  const { text = "", categoryIds = [], accountIds = [], fromDate, toDate, minAmount, maxAmount, type } = options;
+  const searchTerm = `%${text.trim()}%`;
+
+  let sql = `
+    SELECT 
+      t.*,
+      c.name as categoryName,
+      c.colorCode as categoryColor,
+      c.icon as categoryIcon
+    FROM transactions t
+    LEFT JOIN categories c ON t.categoryId = c.id
+    WHERE 1=1
+  `;
+  
+  const params: (string | number)[] = [];
+
+  // Add type filter
+  if (type) {
+    sql += " AND t.type = ?";
+    params.push(type);
+  }
+
+  // Add category filters
+  if (categoryIds.length > 0) {
+    const placeholders = categoryIds.map(() => "?").join(",");
+    sql += ` AND t.categoryId IN (${placeholders})`;
+    params.push(...categoryIds);
+  }
+
+  // Add account filters
+  if (accountIds.length > 0) {
+    const placeholders = accountIds.map(() => "?").join(",");
+    sql += ` AND t.accountId IN (${placeholders})`;
+    params.push(...accountIds);
+  }
+
+  // Add date filters
+  if (fromDate) {
+    if (toDate) {
+      sql += " AND t.date BETWEEN ? AND ?";
+      params.push(fromDate, toDate);
+    } else {
+      // From date to today
+      const today = new Date().toISOString().split('T')[0];
+      sql += " AND t.date BETWEEN ? AND ?";
+      params.push(fromDate, today);
+    }
+  }
+
+  // Add amount filters
+  if (minAmount !== undefined && minAmount !== null) {
+    sql += " AND t.amount >= ?";
+    params.push(minAmount);
+  }
+  if (maxAmount !== undefined && maxAmount !== null) {
+    sql += " AND t.amount <= ?";
+    params.push(maxAmount);
+  }
+
+  // Add text search
+  if (text.trim().length > 0) {
+    sql += ` AND (
+      t.title LIKE ? 
+      OR COALESCE(t.notes, '') LIKE ?
+      OR COALESCE(c.name, '') LIKE ?
+    )`;
+    params.push(searchTerm, searchTerm, searchTerm);
+  }
+
+  sql += " ORDER BY t.date DESC, t.id DESC LIMIT ?";
+  params.push(limit);
+
+  return db.prepare(sql).all(...params) as TransactionWithCategory[];
+}
+
 export function getTransactions(
   ledgerPeriodId?: number | null,
   limit?: number
