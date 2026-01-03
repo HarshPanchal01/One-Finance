@@ -1,3 +1,4 @@
+import { Account, AccountType } from "@/types";
 import { ipcRenderer, contextBridge } from "electron";
 
 // Type definitions for our database operations
@@ -23,6 +24,7 @@ export interface Transaction {
   type: "income" | "expense";
   notes: string | null;
   categoryId: number | null;
+  accountId: number;
 }
 
 export interface TransactionWithCategory extends Transaction {
@@ -39,6 +41,7 @@ export interface CreateTransactionInput {
   type: "income" | "expense";
   notes?: string;
   categoryId?: number;
+  accountId: number;
 }
 
 export interface PeriodSummary {
@@ -60,6 +63,7 @@ export interface CategoryBreakdown {
 export interface SearchOptions {
   text?: string;
   categoryIds?: number[];
+  accountIds?: number[];
   fromDate?: string | null;
   toDate?: string | null;
   minAmount?: number | null;
@@ -125,6 +129,22 @@ const electronAPI = {
 
   deleteCategory: (id: number): Promise<boolean> =>
     ipcRenderer.invoke("db:deleteCategory", id),
+
+  // ============================================
+  // ACCOUNTS
+  // ============================================
+
+  getAccounts: (): Promise<Account[]> => ipcRenderer.invoke("db:getAccounts"),
+  getAccountTypes: (): Promise<AccountType[]> => ipcRenderer.invoke("db:getAccountTypes"),
+  getAccountById: (id: number): Promise<Account | undefined> => ipcRenderer.invoke("db:getTransactions", id),
+  getAccountTypeById: (id: number): Promise<AccountType | undefined> => ipcRenderer.invoke("db:getAccountTypeById", id),
+  insertAccount: (account: Account): Promise<void> => ipcRenderer.invoke("db:insertAccount", account),
+  insertAccountType: (accountType: AccountType): Promise<void> => ipcRenderer.invoke("db:insertAccountType", accountType),
+  resetDefault: (): Promise<void> => ipcRenderer.invoke("db:resetDefault"),
+  editAccount: (account: Account): Promise<Account | undefined> => ipcRenderer.invoke("db:editAccount", account),
+  editAccountType: (accountType: AccountType): Promise<AccountType | undefined> => ipcRenderer.invoke("db:editAccountType", accountType),
+  deleteAccountById: (id: number, strategy: 'transfer' | 'delete', transferToAccountId?: number): Promise<boolean> => ipcRenderer.invoke("db:deleteAccountById", id, strategy, transferToAccountId),
+  deleteAccountTypeById: (id: number): Promise<boolean> => ipcRenderer.invoke("db:deleteAccountTypeById", id),
 
   // ============================================
   // TRANSACTIONS

@@ -24,6 +24,7 @@ const newYear = ref(new Date().getFullYear());
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: "pi-home" },
   { id: "transactions", label: "Transactions", icon: "pi-list" },
+  { id: "accounts", label: "Accounts", icon: "pi-wallet" },
   { id: "categories", label: "Categories", icon: "pi-tags" },
   { id: "settings", label: "Settings", icon: "pi-cog" },
 ];
@@ -77,10 +78,9 @@ async function selectPeriod(year: number, month: number) {
 
 // Handle navigation click
 async function handleNavClick(viewId: string) {
-  if (viewId === "transactions" || viewId === "dashboard") {
-    // Top-level click = Global View
-    await store.clearPeriod();
-  }
+  // Always switch to Global View when clicking top-level navigation items
+  // This ensures we don't get stuck in a specific month view when going to Dashboard, etc.
+  await store.clearPeriod();
   emit("navigate", viewId);
 }
 

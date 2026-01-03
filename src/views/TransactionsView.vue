@@ -5,8 +5,12 @@ import { formatCurrency } from "../types";
 import type { Transaction, TransactionWithCategory } from "../types";
 import TransactionItem from "../components/TransactionItem.vue";
 import TransactionModal from "../components/TransactionModal.vue";
+import ConfirmationModal from "@/components/ConfirmationModal.vue";
+import ErrorModal from "@/components/ErrorModal.vue";
 
 const store = useFinanceStore();
+
+const confirmModal = ref<InstanceType<typeof ConfirmationModal>>();
 
 onMounted(() => {
   // If a period is already selected (from Sidebar), fetch for that period.
@@ -72,7 +76,14 @@ function openEditModal(transaction: TransactionWithCategory) {
 
 // Delete transaction
 async function deleteTransaction(id: number) {
-  if (confirm("Delete this transaction? This cannot be undone.")) {
+  const confirmed = await confirmModal.value?.openConfirmation({
+    title: "Delete Transaction",
+    message: "Are you sure you want to delete this transaction?",
+    cancelText: "Cancel",
+    confirmText: "Delete",
+  });
+
+  if (confirmed) {
     await store.removeTransaction(id);
   }
 }
@@ -243,4 +254,7 @@ function closeModal() {
       @saved="closeModal"
     />
   </div>
+
+  <ConfirmationModal ref="confirmModal" />
+  <ErrorModal ref="errorModal" />
 </template>
