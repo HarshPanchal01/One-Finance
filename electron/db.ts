@@ -376,23 +376,8 @@ export function editAccount(account: Account): void {
       throw new Error("Account being edited not found in database")
     }
 
-    if (account.isDefault) {
+    if (account.isDefault){
       resetDefault();
-    } else {
-      // Trying to unset default
-      if (accountInDatabase.isDefault) {
-        // Find another account to be default
-        const accounts = getAccounts();
-        const otherAccount = accounts.find(a => a.id !== account.id);
-        
-        if (otherAccount) {
-          // Set another account as default
-          db.prepare("UPDATE accounts SET isDefault = 1 WHERE id = ?").run(otherAccount.id);
-        } else {
-           // This is the only account, cannot unset default
-           account.isDefault = true;
-        }
-      }
     }
 
     db.prepare(`
