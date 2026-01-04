@@ -12,6 +12,21 @@ export interface Category {
   icon: string;
 }
 
+export interface AccountType{
+  id: number
+  type: string
+}
+
+export interface Account{
+  id: number
+  accountName: string
+  institutionName?: string
+  startingBalance: number
+  balance?: number
+  accountTypeId: number
+  isDefault: boolean
+}
+
 export interface Transaction {
   id: number;
   ledgerPeriodId: number;
@@ -21,6 +36,7 @@ export interface Transaction {
   type: "income" | "expense";
   notes: string | null;
   categoryId: number | null;
+  accountId: number;
 }
 
 export interface TransactionWithCategory extends Transaction {
@@ -35,8 +51,9 @@ export interface CreateTransactionInput {
   amount: number;
   date: string;
   type: "income" | "expense";
-  notes?: string;
-  categoryId?: number;
+  notes?: string
+  categoryId?: number
+  accountId: number
 }
 
 export interface PeriodSummary {
@@ -58,6 +75,7 @@ export interface CategoryBreakdown {
 export interface SearchOptions {
   text?: string;
   categoryIds?: number[];
+  accountIds?: number[];
   fromDate?: string | null;
   toDate?: string | null;
   minAmount?: number | null;

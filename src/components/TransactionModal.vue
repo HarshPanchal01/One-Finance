@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { useFinanceStore } from "../stores/finance";
 import type { Transaction } from "../types";
 
@@ -17,6 +17,21 @@ const emit = defineEmits<{
 
 const store = useFinanceStore();
 
+// Handle Esc key
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === "Escape" && props.visible) {
+    emit("close");
+  }
+}
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleKeydown);
+});
+
 // Form data
 const form = ref({
   title: "",
@@ -24,6 +39,7 @@ const form = ref({
   date: new Date().toISOString().split("T")[0],
   type: "expense" as "income" | "expense",
   categoryId: null as number | null,
+  accountId: null as number | null,
   notes: "",
 });
 
@@ -55,16 +71,21 @@ watch(
           date: props.transaction.date,
           type: props.transaction.type,
           categoryId: props.transaction.categoryId,
+          accountId: props.transaction.accountId,
           notes: props.transaction.notes || "",
         };
       } else {
         // Create mode - use current period's month/year for date
+        // Find default account
+        const defaultAccount = store.accounts.find(a => a.isDefault);
+        
         form.value = {
           title: "",
           amount: 0,
           date: getDefaultDate(),
           type: "expense",
           categoryId: null,
+          accountId: defaultAccount ? defaultAccount.id : (store.accounts[0]?.id),
           notes: "",
         };
       }
@@ -86,7 +107,8 @@ const isValid = computed(
   () =>
     form.value.title.trim().length > 0 &&
     form.value.amount > 0 &&
-    form.value.date
+    form.value.date &&
+    form.value.accountId !== null
 );
 
 // Save transaction
@@ -101,6 +123,7 @@ async function save() {
         date: form.value.date,
         type: form.value.type,
         categoryId: form.value.categoryId ?? undefined,
+        accountId: form.value.accountId!,
         notes: form.value.notes || undefined,
       });
     } else {
@@ -110,6 +133,7 @@ async function save() {
         date: form.value.date,
         type: form.value.type,
         categoryId: form.value.categoryId ?? undefined,
+        accountId: form.value.accountId!,
         notes: form.value.notes || undefined,
       });
     }
@@ -239,6 +263,27 @@ function close() {
               type="date"
               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+          </div>
+
+          <!-- Account -->
+          <div>
+            <label
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Account
+            </label>
+            <select
+              v-model="form.accountId"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option
+                v-for="account in store.accounts"
+                :key="account.id"
+                :value="account.id"
+              >
+                {{ account.accountName }}
+              </option>
+            </select>
           </div>
 
           <!-- Category -->

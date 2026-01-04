@@ -12,11 +12,12 @@ import DashboardView from "./views/DashboardView.vue";
 import TransactionsView from "./views/TransactionsView.vue";
 import CategoriesView from "./views/CategoriesView.vue";
 import SettingsView from "./views/SettingsView.vue";
+import AccountsView from "./views/accounts_view/AccountsView.vue";
 
 const store = useFinanceStore();
 
 // Current view
-type ViewName = "dashboard" | "transactions" | "categories" | "settings";
+type ViewName = "dashboard" | "transactions" | "categories" | "settings" | "accounts";
 const currentView = ref<ViewName>("dashboard");
 
 // Watch for search active
@@ -72,9 +73,23 @@ function handleKeydown(e: KeyboardEvent) {
         e.preventDefault();
         currentView.value = "transactions";
         break;
-      case "g":
-        e.preventDefault();
-        currentView.value = "categories";
+      case "c":
+        if (e.shiftKey) {
+          e.preventDefault();
+          currentView.value = "categories";
+        }
+        break;
+      case "a":
+        if (e.shiftKey) {
+          e.preventDefault();
+          currentView.value = "accounts";
+        }
+        break;
+      case "s":
+        if (e.shiftKey) {
+          e.preventDefault();
+          currentView.value = "settings";
+        }
         break;
     }
   }
@@ -92,7 +107,7 @@ function handleKeydown(e: KeyboardEvent) {
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Top Bar -->
-      <TopBar />
+      <TopBar v-if="currentView === 'transactions'" />
 
       <!-- Content Area -->
       <main class="flex-1 overflow-y-auto p-6">
@@ -126,6 +141,7 @@ function handleKeydown(e: KeyboardEvent) {
           <TransactionsView v-else-if="currentView === 'transactions'" />
           <CategoriesView v-else-if="currentView === 'categories'" />
           <SettingsView v-else-if="currentView === 'settings'" />
+          <AccountsView v-else-if="currentView === 'accounts'" />
         </template>
       </main>
     </div>

@@ -3,6 +3,8 @@ import { ref, computed } from "vue";
 import type {
   LedgerPeriod,
   Category,
+  Account,
+  AccountType,
   TransactionWithCategory,
   CreateTransactionInput,
   PeriodSummary,
@@ -22,6 +24,12 @@ export const useFinanceStore = defineStore("finance", () => {
 
   // Categories
   const categories = ref<Category[]>([]);
+
+  // Accounts
+  const accounts = ref<Account[]>([]);
+
+  // AccountTypes
+  const accountTypes = ref<AccountType[]>([]);
 
   // Transactions for current period (or Global if null)
   const transactions = ref<TransactionWithCategory[]>([]);
@@ -73,6 +81,13 @@ export const useFinanceStore = defineStore("finance", () => {
       // Load categories first (they're always needed)
       await fetchCategories();
       console.log("[Store] Categories loaded:", categories.value.length);
+
+      // Load accounts they are always needed
+      await fetchAccounts();
+      await fetchAccountTypes();
+
+      console.log("[Store] Accounts loaded:", accounts.value.length);
+      console.log("[Store] AccountTypes loaded:", accountTypes.value.length);
 
       // Load years and periods
       ledgerYears.value = await window.electronAPI.getLedgerYears();
@@ -170,6 +185,42 @@ export const useFinanceStore = defineStore("finance", () => {
     } finally {
       isChangingPeriod.value = false;
     }
+  }
+
+  // ============================================
+  // ACTIONS - Accounts
+  // ============================================
+
+  async function fetchAccounts(){
+    const accountsRaw = await window.electronAPI.getAccounts();
+    const transactionsRaw = await window.electronAPI.getTransactions();
+
+    accountsRaw.forEach(account => {
+      const accountTransactions = transactionsRaw.filter(t => t.accountId === account.id);
+      const transactionSum = accountTransactions.reduce((sum, t) => {
+        return t.type === 'income' ? sum + t.amount : sum - t.amount;
+      }, 0);
+      account.balance = account.startingBalance + transactionSum;
+    });
+
+    accounts.value = accountsRaw;
+
+  }
+
+  async function fetchAccountTypes(){
+    accountTypes.value = await window.electronAPI.getAccountTypes();
+  }
+
+  async function addAccount(account: Account){
+    await window.electronAPI.insertAccount(account);
+  }
+
+  async function editAccount(account: Account){
+    await window.electronAPI.editAccount(account);
+  }
+
+  async function removeAccount(id: number, strategy: 'transfer' | 'delete', transferToAccountId?: number){
+    await window.electronAPI.deleteAccountById(id, strategy, transferToAccountId);
   }
 
   // ============================================
@@ -322,6 +373,7 @@ export const useFinanceStore = defineStore("finance", () => {
     const hasCriteria = 
       (options.text && options.text.trim()) || 
       (options.categoryIds && options.categoryIds.length > 0) ||
+      (options.accountIds && options.accountIds.length > 0) ||
       options.fromDate || 
       options.toDate ||
       options.minAmount ||
@@ -384,6 +436,8 @@ export const useFinanceStore = defineStore("finance", () => {
     ledgerYears,
     ledgerPeriods,
     categories,
+    accounts,
+    accountTypes,
     transactions,
     recentTransactions,
     searchResults,
@@ -418,5 +472,10 @@ export const useFinanceStore = defineStore("finance", () => {
     searchTransactions,
     clearSearch,
     fetchPeriodSummary,
+    fetchAccounts,
+    fetchAccountTypes,
+    removeAccount,
+    addAccount,
+    editAccount,
   };
 });

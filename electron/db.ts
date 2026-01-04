@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import fs from "node:fs";
 import { app } from "electron";
+import { Account, AccountType } from "@/types";
 
 // Use createRequire for native module (better-sqlite3)
 const require = createRequire(import.meta.url);
@@ -85,6 +86,27 @@ export function initializeDatabase(): void {
     )
   `);
 
+  // Account Type
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS accountType (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL
+    )
+  `);
+
+  // Accounts
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      accountName TEXT NOT NULL,
+      institutionName TEXT,
+      startingBalance REAL NOT NULL,
+      accountTypeId INTEGER,
+      isDefault BOOLEAN NOT NULL,
+      FOREIGN KEY (accountTypeId) REFERENCES accountType(id) ON DELETE SET NULL
+    )
+  `);
+
   // Transactions - The main data
   db.exec(`
     CREATE TABLE IF NOT EXISTS transactions (
@@ -96,17 +118,11 @@ export function initializeDatabase(): void {
       type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
       notes TEXT,
       categoryId INTEGER,
+      accountId INTEGER NOT NULL,
       FOREIGN KEY (ledgerPeriodId) REFERENCES ledger_periods(id) ON DELETE CASCADE,
-      FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL
+      FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL,
+      FOREIGN KEY (accountId) REFERENCES accounts(id) ON DELETE CASCADE
     )
-  `);
-
-  // Create indexes for better query performance
-  db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_transactions_ledger_period ON transactions(ledgerPeriodId);
-    CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(categoryId);
-    CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
-    CREATE INDEX IF NOT EXISTS idx_ledger_periods_year ON ledger_periods(year);
   `);
 
   // Seed default categories if none exist
@@ -116,6 +132,23 @@ export function initializeDatabase(): void {
   if (categoryCount.count === 0) {
     seedDefaultCategories();
   }
+
+  // Seed default account types if none exist
+  const accountTypesCount = db
+    .prepare("SELECT COUNT(*) as count FROM accountType")
+    .get() as { count: number };
+  if (accountTypesCount.count === 0) {
+    seedDefaultAccountData();
+  }
+
+  // Create indexes for better query performance
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_transactions_ledger_period ON transactions(ledgerPeriodId);
+    CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(categoryId);
+    CREATE INDEX IF NOT EXISTS idx_transactions_account ON transactions(accountId);
+    CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
+    CREATE INDEX IF NOT EXISTS idx_ledger_periods_year ON ledger_periods(year);
+  `);
 
   console.log(`[DB] Database initialized at: ${dbPath}`);
 }
@@ -142,6 +175,39 @@ function seedDefaultCategories(): void {
     insert.run(cat.name, cat.colorCode, cat.icon);
   }
   console.log("[DB] Default categories seeded");
+}
+
+function seedDefaultAccountData(): void{
+  
+  const defaultAccountTypes = [
+    {type: "Cash"},
+    {type: "Chequing"},
+    {type: "Savings"},
+  ];
+
+  const defaultAccounts = [
+    {accountName: "One Finance", institutionName: null, startingBalance: 0, accountTypeId: 0, isDefault: true},
+  ];
+
+  const insertAccountType = db.prepare(
+    "INSERT INTO accountType (type) VALUES (?)"
+  );
+
+  let result = null;
+  for (const accType of defaultAccountTypes){
+    result = insertAccountType.run(accType.type);
+  }
+
+  const id = result?.lastInsertRowid ?? 0; 
+
+  const insertAccount = db.prepare(
+    "INSERT INTO accounts (accountName, institutionName, startingBalance, accountTypeId, isDefault) VALUES (?,?,?,?,?)"
+  );
+
+  for (const acc of defaultAccounts){
+    insertAccount.run(acc.accountName, acc.institutionName, acc.startingBalance, id, Number(acc.isDefault));
+  }
+  console.log("Account Data Seeded")
 }
 
 // ============================================
@@ -244,6 +310,155 @@ export function getOrCreateCurrentPeriod(): LedgerPeriod {
 }
 
 // ============================================
+// ACCOUNT OPERATIONS
+// ============================================
+
+export function getAccounts(): Account[]{
+  return db.prepare("SELECT * FROM accounts ORDER BY accountName").all() as Account[];
+}
+
+export function getAccountTypes(): AccountType[]{
+  return db.prepare("SELECT * FROM accountType ORDER BY type").all() as AccountType[];
+}
+
+export function getAccountById(id: number): Account | undefined{
+  return db.prepare("SELECT  * FROM accounts WHERE id = ?").get(id) as Account | undefined;
+}
+
+export function getAccountTypeById(id: number): AccountType | undefined{
+  return db.prepare("SELECT  * FROM accountType WHERE id = ?").get(id) as AccountType | undefined;
+}
+
+export function insertAccount(account: Account): void{
+
+  if (account.isDefault){
+    resetDefault();
+  }
+
+  const insert = db.prepare("INSERT INTO accounts (accountName, institutionName, startingBalance, accountTypeId, isDefault) VALUES (?,?,?,?,?)");
+  insert.run(account.accountName, account.institutionName, account.startingBalance, account.accountTypeId, Number(account.isDefault));
+}
+
+export function insertAccountType(accountType: AccountType): void{
+  const insert = db.prepare("INSERT INTO accountType (type) VALUES (?)");
+  insert.run(accountType.type);
+}
+
+export function resetDefault(): void {
+  db.prepare("UPDATE accounts SET isDefault = false WHERE isDefault = true").run();
+}
+
+export function editAccount(account: Account): void {
+
+  try{
+
+    const accountInDatabase = getAccountById(account.id);
+
+    if(accountInDatabase === undefined){
+      throw new Error("Account being edited not found in database")
+    }
+
+    if (account.isDefault){
+      resetDefault();
+    }
+
+    db.prepare(`
+      UPDATE accounts
+      SET
+        accountName = ?,
+        institutionName = ?,
+        startingBalance = ?,
+        accountTypeId = ?,
+        isDefault = ?
+      WHERE id = ?
+    `).run(
+      account.accountName,
+      account.institutionName,
+      account.startingBalance,
+      account.accountTypeId,
+      account.isDefault ? 1 : 0, 
+      account.id
+    );
+  } catch(e){
+    console.log(e);
+  }
+}
+
+export function editAccountType(accountType: AccountType): void{
+  db.prepare(`
+    UPDATE accountType
+    SET
+      type = ?,
+    WHERE id = ?
+  `).run(
+    accountType.type,
+    accountType.id
+  );
+}
+
+export function deleteAccountById(
+  accountId: number,
+  strategy: "transfer" | "delete",
+  transferToAccountId?: number
+): void {
+  const accounts = getAccounts();
+  const account = accounts.find((a) => a.id === accountId);
+
+  if (account === undefined) return;
+
+  // Requirement: An account will always exist.
+  if (accounts.length <= 1) {
+    throw new Error("Cannot delete the only remaining account.");
+  }
+
+  if (strategy === "transfer") {
+    if (!transferToAccountId) {
+      throw new Error("Transfer target account ID is required.");
+    }
+    // Transfer transactions
+    db.prepare("UPDATE transactions SET accountId = ? WHERE accountId = ?").run(
+      transferToAccountId,
+      accountId
+    );
+  } else {
+    // Delete transactions associated with this account
+    db.prepare("DELETE FROM transactions WHERE accountId = ?").run(accountId);
+  }
+
+  // Now delete the account
+  db.prepare("DELETE FROM accounts WHERE id = ?").run(accountId);
+
+  // If we deleted the default account, ensure a new default is set
+  if (account.isDefault) {
+    if (strategy === "transfer" && transferToAccountId) {
+      const target = accounts.find((a) => a.id === transferToAccountId);
+      if (target) {
+        target.isDefault = true;
+        editAccount(target);
+      }
+    } else {
+      // Pick first available
+      const nextDefault = getAccounts()[0];
+      if (nextDefault) {
+        nextDefault.isDefault = true;
+        editAccount(nextDefault);
+      }
+    }
+  }
+}
+
+export function deleteAccount(account: Account): void {
+
+  db.prepare("DELETE FROM accountType WHERE id = ?").run(account.id);
+
+
+
+}
+
+
+
+
+// ============================================
 // CATEGORIES OPERATIONS
 // ============================================
 
@@ -316,6 +531,7 @@ export interface Transaction {
   type: "income" | "expense";
   notes: string | null;
   categoryId: number | null;
+  accountId: number | null;
 }
 
 export interface TransactionWithCategory extends Transaction {
@@ -332,11 +548,13 @@ export interface CreateTransactionInput {
   type: "income" | "expense";
   notes?: string;
   categoryId?: number;
+  accountId?: number;
 }
 
 export interface SearchOptions {
   text?: string;
   categoryIds?: number[];
+  accountIds?: number[];
   fromDate?: string | null;
   toDate?: string | null;
   minAmount?: number | null;
@@ -348,7 +566,7 @@ export function searchTransactions(
   options: SearchOptions,
   limit: number = 50
 ): TransactionWithCategory[] {
-  const { text = "", categoryIds = [], fromDate, toDate, minAmount, maxAmount, type } = options;
+  const { text = "", categoryIds = [], accountIds = [], fromDate, toDate, minAmount, maxAmount, type } = options;
   const searchTerm = `%${text.trim()}%`;
 
   let sql = `
@@ -375,6 +593,13 @@ export function searchTransactions(
     const placeholders = categoryIds.map(() => "?").join(",");
     sql += ` AND t.categoryId IN (${placeholders})`;
     params.push(...categoryIds);
+  }
+
+  // Add account filters
+  if (accountIds.length > 0) {
+    const placeholders = accountIds.map(() => "?").join(",");
+    sql += ` AND t.accountId IN (${placeholders})`;
+    params.push(...accountIds);
   }
 
   // Add date filters
@@ -471,8 +696,8 @@ export function createTransaction(
   input: CreateTransactionInput
 ): TransactionWithCategory {
   const stmt = db.prepare(`
-    INSERT INTO transactions (ledgerPeriodId, title, amount, date, type, notes, categoryId)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO transactions (ledgerPeriodId, title, amount, date, type, notes, categoryId, accountId)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = stmt.run(
@@ -482,7 +707,8 @@ export function createTransaction(
     input.date,
     input.type,
     input.notes || null,
-    input.categoryId || null
+    input.categoryId || null,
+    input.accountId
   );
 
   return getTransactionById(result.lastInsertRowid as number)!;
@@ -497,7 +723,7 @@ export function updateTransaction(
 
   const stmt = db.prepare(`
     UPDATE transactions 
-    SET ledgerPeriodId = ?, title = ?, amount = ?, date = ?, type = ?, notes = ?, categoryId = ?
+    SET ledgerPeriodId = ?, title = ?, amount = ?, date = ?, type = ?, notes = ?, categoryId = ?, accountId = ?
     WHERE id = ?
   `);
 
@@ -509,6 +735,7 @@ export function updateTransaction(
     input.type ?? current.type,
     input.notes !== undefined ? input.notes : current.notes,
     input.categoryId !== undefined ? input.categoryId : current.categoryId,
+    input.accountId !== undefined ? input.accountId : current.accountId,
     id
   );
 
