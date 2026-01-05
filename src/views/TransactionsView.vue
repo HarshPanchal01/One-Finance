@@ -10,6 +10,10 @@ import ErrorModal from "@/components/ErrorModal.vue";
 
 const store = useFinanceStore();
 
+const emit = defineEmits<{
+  (e: "request-edit-account", id: number): void;
+}>();
+
 const confirmModal = ref<InstanceType<typeof ConfirmationModal>>();
 
 onMounted(() => {
@@ -92,6 +96,11 @@ async function deleteTransaction(id: number) {
 function closeModal() {
   showModal.value = false;
   editingTransaction.value = null;
+}
+
+// Navigate to account edit
+function goToAccount(accountId: number) {
+  emit("request-edit-account", accountId);
 }
 </script>
 
@@ -240,6 +249,7 @@ function closeModal() {
           :transaction="transaction"
           @edit="openEditModal"
           @delete="deleteTransaction"
+          @edit-account="goToAccount"
         />
       </div>
     </div>

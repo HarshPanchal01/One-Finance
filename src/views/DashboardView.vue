@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { useFinanceStore } from "../stores/finance";
 import { formatCurrency } from "../types";
+import TransactionItem from "../components/TransactionItem.vue";
 
 const store = useFinanceStore();
 
 const emit = defineEmits<{
   (e: "addTransaction"): void;
+  (e: "request-edit-account", id: number): void;
 }>();
 </script>
 
@@ -174,48 +176,12 @@ const emit = defineEmits<{
         v-else
         class="space-y-2"
       >
-        <div
+        <TransactionItem
           v-for="transaction in store.recentTransactions"
           :key="transaction.id"
-          class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50"
-        >
-          <div class="flex items-center space-x-3">
-            <div
-              class="w-10 h-10 rounded-lg flex items-center justify-center"
-              :class="
-                transaction.type === 'income'
-                  ? 'bg-income-light dark:bg-income/20'
-                  : 'bg-expense-light dark:bg-expense/20'
-              "
-            >
-              <i
-                :class="['pi', transaction.categoryIcon || 'pi-tag']"
-                :style="{ color: transaction.categoryColor || '#6b7280' }"
-              />
-            </div>
-            <div>
-              <p class="font-medium text-gray-900 dark:text-white">
-                {{ transaction.title }}
-              </p>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                {{ transaction.categoryName || "Uncategorized" }}
-              </p>
-            </div>
-          </div>
-          <div class="text-right">
-            <p
-              class="font-semibold"
-              :class="
-                transaction.type === 'income' ? 'text-income' : 'text-expense'
-              "
-            >
-              {{ transaction.type === "income" ? "+" : "-" }}{{ formatCurrency(transaction.amount) }}
-            </p>
-            <p class="text-xs text-gray-500 dark:text-gray-400">
-              {{ transaction.date }}
-            </p>
-          </div>
-        </div>
+          :transaction="transaction"
+          @edit-account="(id) => emit('request-edit-account', id)"
+        />
       </div>
     </div>
   </div>
