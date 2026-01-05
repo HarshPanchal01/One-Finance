@@ -1,6 +1,10 @@
 <template>
   <div
-    class="flex items-center justify-between p-4 border-b border-gray-200 hover:bg-gray-50 transition-colors"
+    ref="tileRef"
+    class="flex items-center justify-between p-4 border-b border-gray-200 transition-colors duration-500"
+    :class="[
+      isHighlighted ? 'bg-primary-100 dark:bg-primary-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+    ]"
   >
     <div class="flex flex-col">
       <p class="font-medium text-gray-900">
@@ -21,6 +25,13 @@
     <div class="flex space-x-2">
       <button
         class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 hover:text-primary-500 transition-colors"
+        title="View Transactions"
+        @click="emits('view-transactions')"
+      >
+        <i class="pi pi-list text-sm" />
+      </button>
+      <button
+        class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 hover:text-primary-500 transition-colors"
         title="Edit"
         @click="handleEditClick"
       >
@@ -39,7 +50,7 @@
 
 <script setup lang="ts">
 import { useFinanceStore } from '@/stores/finance'
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 
     interface Props {
@@ -49,13 +60,16 @@ import { computed } from 'vue';
         balance?: number
         accountTypeId: number
         isDefault: boolean
+        isHighlighted?: boolean
     }
 
     const store = useFinanceStore();
+    const tileRef = ref<HTMLElement | null>(null);
 
     const emits = defineEmits<{
         (e: 'edit'): void,
-        (e: 'delete'): void
+        (e: 'delete'): void,
+        (e: 'view-transactions'): void
     }>();
 
     function handleEditClick() {
@@ -75,5 +89,10 @@ import { computed } from 'vue';
         : 'N/A'
     );
 
+    watch(() => props.isHighlighted, (newVal) => {
+      if (newVal && tileRef.value) {
+        tileRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, { immediate: true });
 
 </script>

@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { useFinanceStore } from "../stores/finance";
 import DatePicker from "primevue/datepicker";
+
+const props = defineProps<{
+  initialAccountId?: number | null;
+}>();
 
 const store = useFinanceStore();
 const searchText = ref("");
@@ -203,6 +207,13 @@ function handleClickOutside(e: MouseEvent) {
   }
 }
 
+async function checkInitialAccountId(id?: number | null) {
+  if (id) {
+    selectedAccountIds.value = [id];
+    await handleSearch();
+  }
+}
+
 onMounted(async () => {
   window.addEventListener("keydown", handleKeydown);
   window.addEventListener("click", handleClickOutside);
@@ -214,6 +225,12 @@ onMounted(async () => {
   if (store.accounts.length === 0) {
     await store.fetchAccounts();
   }
+
+  checkInitialAccountId(props.initialAccountId);
+});
+
+watch(() => props.initialAccountId, (newId) => {
+  checkInitialAccountId(newId);
 });
 
 onUnmounted(() => {

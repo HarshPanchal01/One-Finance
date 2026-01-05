@@ -20,6 +20,10 @@ const store = useFinanceStore();
 type ViewName = "dashboard" | "transactions" | "categories" | "settings" | "accounts";
 const currentView = ref<ViewName>("dashboard");
 
+// Cross-view state
+const activeAccountId = ref<number | null>(null);
+const activeFilterAccountId = ref<number | null>(null);
+
 // Watch for search active
 watch(
   () => store.isSearching,
@@ -36,6 +40,10 @@ const showQuickAddModal = ref(false);
 // Navigate to view
 function navigateTo(view: string) {
   currentView.value = view as ViewName;
+  
+  // Clear cross-view state on manual navigation
+  activeAccountId.value = null;
+  activeFilterAccountId.value = null;
 
   if (view === "dashboard") {
     // Keep the current period context when going to Dashboard
@@ -43,6 +51,18 @@ function navigateTo(view: string) {
     store.fetchPeriodSummary();
   }
   // Transactions logic is handled by Sidebar emitting specific events or store actions
+}
+
+function handleRequestEditAccount(id: number) {
+  activeAccountId.value = id;
+  currentView.value = "accounts";
+  // Reset after a tick to allow re-triggering if needed, though prop watcher handles it
+  // But keeping it as state is fine.
+}
+
+function handleRequestViewTransactions(id: number) {
+  activeFilterAccountId.value = id;
+  currentView.value = "transactions";
 }
 
 // Initialize on mount
@@ -107,7 +127,10 @@ function handleKeydown(e: KeyboardEvent) {
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Top Bar -->
-      <TopBar v-if="currentView === 'transactions'" />
+      <TopBar 
+        v-if="currentView === 'transactions'" 
+        :initial-account-id="activeFilterAccountId"
+      />
 
       <!-- Content Area -->
       <main class="flex-1 overflow-y-auto p-6">
@@ -137,11 +160,19 @@ function handleKeydown(e: KeyboardEvent) {
           <DashboardView
             v-if="currentView === 'dashboard'"
             @add-transaction="showQuickAddModal = true"
+            @request-edit-account="handleRequestEditAccount"
           />
-          <TransactionsView v-else-if="currentView === 'transactions'" />
+          <TransactionsView 
+            v-else-if="currentView === 'transactions'" 
+            @request-edit-account="handleRequestEditAccount"
+          />
           <CategoriesView v-else-if="currentView === 'categories'" />
           <SettingsView v-else-if="currentView === 'settings'" />
-          <AccountsView v-else-if="currentView === 'accounts'" />
+          <AccountsView 
+            v-else-if="currentView === 'accounts'" 
+            :highlight-account-id="activeAccountId"
+            @request-view-transactions="handleRequestViewTransactions"
+          />
         </template>
       </main>
     </div>

@@ -22,8 +22,10 @@
     <div class="mt-4 overflow-auto bg-white rounded-lg shadow">
       <AccountListView
         :account-array="state.accountArray"
+        :highlighted-id="highlightedId"
         @edit="editAccount"
         @delete="deleteAccount"
+        @view-transactions="viewTransactions"
       />
     </div>
 
@@ -141,12 +143,20 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue';
+import { reactive, ref, onMounted, watch } from 'vue';
 import { useFinanceStore } from '@/stores/finance';
 import AccountListView from './components/AccountListView.vue';
 import { Account } from '@/types';
 import ErrorModal from '@/components/ErrorModal.vue';
 import AccountDeleteModal from '@/components/AccountDeleteModal.vue';
+
+const props = defineProps<{
+  highlightAccountId?: number | null;
+}>();
+
+const emit = defineEmits<{
+  (e: "request-view-transactions", id: number): void;
+}>();
 
 const store = useFinanceStore();
 
@@ -158,6 +168,7 @@ const errorModal = ref<InstanceType<typeof ErrorModal>>();
 const openDialog = ref(false);
 const showDeleteModal = ref(false);
 const accountToDelete = ref<Account | null>(null);
+const highlightedId = ref<number | null>(null);
 
 let isEdit = false;
 let accountEditId = 0;
@@ -167,9 +178,24 @@ const state = reactive({
   accountTypeArray: accountsTypeArray
 });
 
+function highlightAccount(id?: number | null) {
+  if (id) {
+    highlightedId.value = id;
+    // Clear highlight after animation
+    window.setTimeout(() => {
+      highlightedId.value = null;
+    }, 2000);
+  }
+}
+
 onMounted(async () => {
   await store.fetchAccounts();
   state.accountArray = store.accounts;
+  highlightAccount(props.highlightAccountId);
+});
+
+watch(() => props.highlightAccountId, (newId) => {
+  highlightAccount(newId);
 });
 
 const form = reactive({
@@ -236,6 +262,10 @@ function editAccount(account: Account) {
   form.isDefault = Boolean(account.isDefault);
   isEdit = true;
   accountEditId = account.id;
+}
+
+function viewTransactions(account: Account) {
+  emit("request-view-transactions", account.id);
 }
 
 async function deleteAccount(account: Account) {

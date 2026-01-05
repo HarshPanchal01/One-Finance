@@ -9,8 +9,10 @@
       :institution-name="account.institutionName ?? ''"
       :account-type-id="account.accountTypeId"
       :is-default="account.isDefault"
+      :is-highlighted="account.id === highlightedId"
       @edit="() => emit('edit', account)"
       @delete="() => emit('delete', account)"
+      @view-transactions="() => emit('view-transactions', account)"
     />
   </div>
 </template>
@@ -22,11 +24,13 @@ import AccountListTile from './AccountListTile.vue';
 
 const emit = defineEmits<{
     (e: 'edit', account: Account): void,
-    (e: 'delete', account: Account): void
+    (e: 'delete', account: Account): void,
+    (e: 'view-transactions', account: Account): void
 }>();
 
-defineProps({
-    accountArray: Array<Account>
-});
+defineProps<{
+    accountArray: Array<Account>,
+    highlightedId?: number | null
+}>();
 
 </script>

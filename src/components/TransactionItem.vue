@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import type { TransactionWithCategory } from "../types";
 import { formatCurrency, formatDate } from "../types";
+import { useFinanceStore } from "../stores/finance";
 
 const props = defineProps<{
   transaction: TransactionWithCategory;
@@ -10,9 +11,17 @@ const props = defineProps<{
 const emit = defineEmits<{
   edit: [transaction: TransactionWithCategory];
   delete: [id: number];
+  "edit-account": [id: number];
 }>();
 
+const store = useFinanceStore();
 const isIncome = computed(() => props.transaction.type === "income");
+
+const accountName = computed(() => {
+  if (!props.transaction.accountId) return null;
+  const account = store.accounts.find((a) => a.id === props.transaction.accountId);
+  return account ? account.accountName : null;
+});
 </script>
 
 <template>
@@ -40,10 +49,21 @@ const isIncome = computed(() => props.transaction.type === "income");
         <p class="font-medium text-gray-900 dark:text-white">
           {{ transaction.title }}
         </p>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          {{ transaction.categoryName || "Uncategorized" }}
-          <span class="mx-1">•</span>
-          {{ formatDate(transaction.date) }}
+        <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+          <span>{{ transaction.categoryName || "Uncategorized" }}</span>
+          <span
+            v-if="accountName"
+            class="mx-0.5"
+          >•</span>
+          <button
+            v-if="accountName"
+            class="hover:text-primary-500 hover:underline transition-colors cursor-pointer"
+            @click.stop="emit('edit-account', transaction.accountId)"
+          >
+            {{ accountName }}
+          </button>
+          <span class="mx-0.5">•</span>
+          <span>{{ formatDate(transaction.date) }}</span>
         </p>
       </div>
     </div>
