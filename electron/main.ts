@@ -66,7 +66,34 @@ ipcMain.handle('save-file', async (_event, {data, defaultName}) => {
 
   return { success: true, path: filePath}
   }
-)
+);
+
+ipcMain.handle('import-file', async() => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: "Import Data",
+    properties: ['openFile'],
+    filters: [
+      { name: 'JSON Files', extensions: ['json']},
+      { name: 'All Files', extensions: ['*']}
+    ]
+  })
+
+  if (canceled || filePaths.length === 0){
+    return {success: false}
+  }
+
+  const filePath = filePaths[0]
+  const contents = fs.readFileSync(filePath, 'utf-8')
+
+  const data = JSON.parse(contents)
+
+  return{
+    success: true,
+    path: filePath,
+    data: data,
+  }
+
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

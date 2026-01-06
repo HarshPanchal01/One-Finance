@@ -206,6 +206,14 @@ const electronAPI = {
   exportDatabase: (payload : {data: string, defaultName?: string}): Promise<{success:boolean}> =>
     ipcRenderer.invoke("save-file", payload),
 
+  importDatabase: () : Promise<{success: boolean, filepath? : string, data? : {
+    accounts?: Account[],
+    transactions?: TransactionWithCategory[],
+    categories?: Category[],
+    accountType?: AccountType[],
+  }}> =>
+    ipcRenderer.invoke("import-file"),
+
   // ============================================
   // GENERIC IPC (for future use)
   // ============================================

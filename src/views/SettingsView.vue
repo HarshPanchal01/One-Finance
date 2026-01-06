@@ -98,11 +98,40 @@ async function exportData() {
 }
 async function importData() {
 
+  const result = await window.electronAPI.importDatabase();
+
+  if (!result.success) {return}
+
+  // TODO 
+  // Verify The Data So that the importing is correct
+
+  const replace = await confirmModal.value?.openConfirmation({
+    title: "Append Data",
+    message: "Would you like to append the imported data or replace current data? Replacing current data is unrecoverable",
+    confirmText: "Replace Data",
+    cancelText: "Append Data",
+  });
+
+  if (replace){
+
+    //TODO
+    //Delete all the data in the current tables and then iterate over all enteries in import inserting them into the database
+
+
+  }
+  else{
+    
+    //TODO
+    //Insert all enteries of the import into the database 
+
+  }
+
+  
 }
 </script>
 
 <template>
-  <div class="space-y-6 max-w-2xl">
+  <div class="space-y-6 flex-col items-center mt-8 mb-8 mr-32 ml-32">
     <!-- App Info -->
     <div class="card p-6">
       <div class="flex items-center space-x-4 mb-4">
