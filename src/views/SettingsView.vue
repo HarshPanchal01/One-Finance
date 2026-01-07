@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import ConfirmationModal from "@/components/ConfirmationModal.vue";
 import ErrorModal from "@/components/ErrorModal.vue";
 import { useFinanceStore } from "@/stores/finance";
+import { Account, AccountType, Category, LedgerPeriod, TransactionWithCategory } from "@/types";
 
 const appVersion = "0.0.1";
 const dbPath = ref("");
@@ -66,12 +67,14 @@ async function exportData() {
   const transactionsValue = store.transactions;
   const categoriesValue = store.categories;
   const accountTypesValue = store.accountTypes;
+  const ledgerPeriodsValue = store.ledgerPeriods;
 
   const data = {
     accounts: accountsValue,
     transactions: transactionsValue,
     categories: categoriesValue,
     accountTypes: accountTypesValue,
+    ledgerPeriods: ledgerPeriodsValue,
   };
 
 
@@ -96,33 +99,183 @@ async function exportData() {
 
 
 }
+
+function verifyImportData(data: {
+  accounts?: Account[],
+  transactions?: TransactionWithCategory[],
+  categories?: Category[],
+  accountTypes?: AccountType[],
+  ledgerPeriods?: LedgerPeriod[]
+}): boolean 
+{
+
+  const accounts = data.accounts;
+  const transactions = data.transactions;
+  const categories = data.categories;
+  const accountTypes = data.accountTypes;
+  const ledgerPeriods = data.ledgerPeriods;
+
+  if (accounts == undefined || transactions == undefined || categories == undefined || accountTypes == undefined || ledgerPeriods == undefined){
+    return false
+  }
+
+  accounts.forEach((value) => {
+    if (value.accountName == undefined || value.accountTypeId == undefined || value.id == undefined || value.startingBalance == undefined || value.isDefault == undefined){
+      return false;
+    }
+  })
+
+  transactions.forEach((value) => {
+    if (
+      value.id == undefined ||
+      value.ledgerPeriodId == undefined ||
+      value.title == undefined ||
+      value.amount == undefined ||
+      value.date == undefined ||
+      value.type == undefined ||
+      value.notes == undefined ||
+      value.categoryId == undefined ||
+      value.accountId == undefined ||
+      value.categoryName == undefined ||
+      value.categoryColor == undefined ||
+      value.categoryIcon == undefined
+  ){
+      return false;
+    }
+  })
+
+  accountTypes.forEach((value) => {
+    if (value.id == undefined || value.type == undefined){
+      return false;
+    }
+  })
+
+  categories.forEach((value) => {
+    if (value.id == undefined || value.name == undefined || value.colorCode == undefined || value.icon == undefined){
+      return false;
+    }
+  })
+
+  ledgerPeriods.forEach((value) => {
+    if (value.id == undefined || value.month == undefined || value.year == undefined){
+      return false;
+    }
+  })
+
+  return true;
+}
+
+async function insertImportData(data: {
+  accounts?: Account[],
+  transactions?: TransactionWithCategory[],
+  categories?: Category[],
+  accountTypes?: AccountType[],
+  ledgerPeriods?: LedgerPeriod[]
+}) {
+
+  
+  const accounts = data.accounts!;
+  const transactions = data.transactions!;
+  const categories = data.categories!;
+  const accountTypes = data.accountTypes!;
+  const ledgerPeriods = data.ledgerPeriods!;
+
+  console.log(accountTypes);
+
+  for (const accountType of accountTypes){
+
+    if (store.accountTypes.find((value) => value.id === accountType.id) != undefined) {
+      console.log("Account type id: %d name: %s already exists, skipping", accountType.id, accountType.type);
+      continue
+    }
+
+    console.log("Inserting account type id: %d name: %s", accountType.id, accountType.type);
+    await store.addAccountType(accountType);
+  }
+
+  for (const account of accounts){
+
+    if (store.accounts.find((value) => value.id === account.id) != undefined) {
+      continue
+    }
+    await store.addAccount(account);
+
+  }
+
+  for (const category of categories){
+
+    if (store.categories.find((value) => value.id === category.id || value.id) != undefined) {
+      continue
+    }
+
+    await store.addCategory(category.name, category.colorCode, category.icon);
+  }
+
+  for (const ledgerPeriod of ledgerPeriods){
+
+    if (store.ledgerPeriods.find((value) => value.id === ledgerPeriod.id) != undefined) {
+      continue
+    }
+
+    await store.createYear(ledgerPeriod.year);
+  }
+
+  for (const transaction of transactions){
+
+    if (store.transactions.find((value) => value.id === transaction.id) != undefined) {
+      continue
+    }
+
+    await store.addTransaction({
+        title: transaction.title,
+        amount: transaction.amount,
+        date: transaction.date,
+        type: transaction.type,
+        categoryId: transaction.categoryId ?? undefined,
+        accountId: transaction.accountId!,
+        notes: transaction.notes || undefined,
+      }
+    );
+  }
+}
+
+
 async function importData() {
 
   const result = await window.electronAPI.importDatabase();
 
-  if (!result.success) {return}
+  if (!result.success || result.data == undefined) {return}
 
-  // TODO 
-  // Verify The Data So that the importing is correct
+  const verified = verifyImportData(result.data);
+
+  if (!verified) {
+    return await errorModal.value?.openConfirmation({
+      title: "Import Error",
+      message: "The selected file is not a valid One Finance export file.",
+      confirmText: "Okay",
+    });
+  }
 
   const replace = await confirmModal.value?.openConfirmation({
     title: "Append Data",
-    message: "Would you like to append the imported data or replace current data? Replacing current data is unrecoverable",
+    message: "Would you like to append the imported data or replace current data? Appended items that are duplicates will be skipped. Replacing current data is unrecoverable",
     confirmText: "Replace Data",
     cancelText: "Append Data",
   });
 
+
   if (replace){
 
-    //TODO
-    //Delete all the data in the current tables and then iterate over all enteries in import inserting them into the database
+    await store.deleteAllDataFromTables();
+
+
+    await insertImportData(result.data);
 
 
   }
   else{
     
-    //TODO
-    //Insert all enteries of the import into the database 
+    await insertImportData(result.data);
 
   }
 
