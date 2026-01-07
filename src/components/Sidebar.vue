@@ -148,6 +148,13 @@ async function viewYearDetails() {
   }
   contextMenuVisible.value = false;
 }
+
+async function requestDeleteYear() {
+  contextMenuVisible.value = false;
+  if (contextMenuYear.value) {
+    await deleteYear(contextMenuYear.value);
+  }
+}
 </script>
 
 <template>
@@ -277,17 +284,6 @@ async function viewYearDetails() {
                 yearNode.year
               }}</span>
             </button>
-
-            <!-- Year Actions -->
-            <div class="hidden group-hover:flex items-center pr-2">
-              <button
-                class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-400 hover:text-expense"
-                title="Delete year"
-                @click.stop="deleteYear(yearNode.year)"
-              >
-                <i class="pi pi-trash text-xs" />
-              </button>
-            </div>
           </div>
 
           <!-- Month Children -->
@@ -373,6 +369,13 @@ async function viewYearDetails() {
         >
           <i class="pi pi-eye mr-2 text-gray-400" />
           View Year Details
+        </button>
+        <button
+          class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center border-t border-gray-100 dark:border-gray-700"
+          @click="requestDeleteYear"
+        >
+          <i class="pi pi-trash mr-2" />
+          Delete Year
         </button>
       </div>
     </Teleport>
