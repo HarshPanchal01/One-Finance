@@ -95,6 +95,9 @@ const electronAPI = {
   // ============================================
   // SYSTEM OPERATIONS
   // ============================================
+
+  deleteAllDataFromTables: (): Promise<void> => ipcRenderer.invoke("db:deleteAllDataFromTables"),
+
   getDbPath: (): Promise<string> => ipcRenderer.invoke("system:getDbPath"),
 
   openDbLocation: (): Promise<void> =>
@@ -110,7 +113,8 @@ const electronAPI = {
     accounts?: Account[],
     transactions?: TransactionWithCategory[],
     categories?: Category[],
-    accountType?: AccountType[],
+    accountTypes?: AccountType[],
+    ledgerPeriods?: LedgerPeriod[],
   }}> =>
     ipcRenderer.invoke("import-file"),
 

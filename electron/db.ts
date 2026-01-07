@@ -175,7 +175,7 @@ function seedDefaultAccountData(): void{
   ];
 
   const insertAccountType = db.prepare(
-    "INSERT INTO accountType (type) VALUES (?)"
+    "INSERT INTO accountType (id, type) VALUES (?, ?)"
   );
 
   let result = null;
@@ -193,6 +193,20 @@ function seedDefaultAccountData(): void{
     insertAccount.run(acc.accountName, acc.institutionName, acc.startingBalance, id, Number(acc.isDefault));
   }
   console.log("Account Data Seeded")
+}
+
+export function deleteAllDataFromTables(): void{
+  const tables = [
+    "transactions",
+    "accounts",
+    "accountType",
+    "categories",
+    "ledger_periods",
+    "ledger_years"
+  ];
+  for (const table of tables){
+    db.prepare(`DELETE FROM ${table}`).run();
+  }
 }
 
 // ============================================
@@ -265,9 +279,23 @@ export function insertAccount(account: Account): void{
   insert.run(account.accountName, account.institutionName, account.startingBalance, account.accountTypeId, Number(account.isDefault));
 }
 
+export function insertAccountWithId(account: Account): void{
+  if (account.isDefault){
+    resetDefault();
+  }
+
+  const insert = db.prepare("INSERT INTO accounts (id, accountName, institutionName, startingBalance, accountTypeId, isDefault) VALUES (?,?,?,?,?,?)");
+  insert.run(account.id, account.accountName, account.institutionName, account.startingBalance, account.accountTypeId, Number(account.isDefault));
+}
+
 export function insertAccountType(accountType: AccountType): void{
-  const insert = db.prepare("INSERT INTO accountType (type) VALUES (?)");
+  const insert = db.prepare("INSERT INTO accountType (id, type) VALUES (?, ?)");
   insert.run(accountType.type);
+}
+
+export function insertAccountTypeWithId(accountType: AccountType): void{
+  const insert = db.prepare("INSERT INTO accountType (id, type) VALUES (?, ?)");
+  insert.run(accountType.id, accountType.type);
 }
 
 export function resetDefault(): void {
@@ -416,6 +444,11 @@ export function createCategory(
     colorCode,
     icon,
   };
+}
+
+export function insertCategoryWithId(category: Category): void{
+  const insert = db.prepare("INSERT INTO categories (id, name, colorCode, icon) VALUES (?,?,?,?)");
+  insert.run(category.id, category.name, category.colorCode, category.icon);
 }
 
 export function updateCategory(
@@ -599,6 +632,24 @@ export function createTransaction(
   );
 
   return getTransactionById(result.lastInsertRowid as number)!;
+}
+
+export function insertTransactionWithId(transaction: Transaction): void{
+  const insert = db.prepare(`
+    INSERT INTO transactions (id, ledgerPeriodId, title, amount, date, type, notes, categoryId, accountId)
+    VALUES (?,?,?,?,?,?,?,?,?)
+  `);
+  insert.run(
+    transaction.id,
+    transaction.ledgerPeriodId,
+    transaction.title,
+    transaction.amount,
+    transaction.date,
+    transaction.type,
+    transaction.notes,
+    transaction.categoryId,
+    transaction.accountId
+  );
 }
 
 export function updateTransaction(

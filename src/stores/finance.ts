@@ -326,6 +326,10 @@ export const useFinanceStore = defineStore("finance", () => {
     await window.electronAPI.insertAccount(account);
   }
 
+  async function addAccountType(accountType: AccountType){
+    await window.electronAPI.insertAccountType(accountType);
+  }
+
   async function editAccount(account: Account){
     await window.electronAPI.editAccount(account);
   }
@@ -526,6 +530,20 @@ export const useFinanceStore = defineStore("finance", () => {
   //   );
   // }
 
+  // ==================================
+  // SETTINGS ACTIONS
+  // ==================================
+
+  async function deleteAllDataFromTables(){
+    await window.electronAPI.deleteAllDataFromTables();
+    accounts.value = [];
+    categories.value = [];
+    transactions.value = [];
+    accountTypes.value = [];
+    ledgerPeriods.value = [];
+    ledgerYears.value = [];
+  }
+
   // ============================================
   // RETURN STORE 
   // ============================================
@@ -576,6 +594,8 @@ export const useFinanceStore = defineStore("finance", () => {
     fetchAccountTypes,
     removeAccount,
     addAccount,
+    addAccountType,
     editAccount,
+    deleteAllDataFromTables,
   };
 });
