@@ -65,17 +65,6 @@ export function initializeDatabase(): void {
     )
   `);
 
-  // Ledger Periods - Links to a year, represents a month
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS ledger_periods (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      year INTEGER NOT NULL,
-      month INTEGER NOT NULL CHECK (month >= 1 AND month <= 12),
-      FOREIGN KEY (year) REFERENCES ledger_years(year) ON DELETE CASCADE,
-      UNIQUE (year, month)
-    )
-  `);
-
   // Categories - For organizing transactions
   db.exec(`
     CREATE TABLE IF NOT EXISTS categories (
@@ -119,7 +108,6 @@ export function initializeDatabase(): void {
       notes TEXT,
       categoryId INTEGER,
       accountId INTEGER NOT NULL,
-      FOREIGN KEY (ledgerPeriodId) REFERENCES ledger_periods(id) ON DELETE CASCADE,
       FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL,
       FOREIGN KEY (accountId) REFERENCES accounts(id) ON DELETE CASCADE
     )
@@ -234,79 +222,6 @@ export function deleteLedgerYear(year: number): boolean {
   const stmt = db.prepare("DELETE FROM ledger_years WHERE year = ?");
   const result = stmt.run(year);
   return result.changes > 0;
-}
-
-// ============================================
-// LEDGER PERIODS OPERATIONS
-// ============================================
-
-export interface LedgerPeriod {
-  id: number;
-  year: number;
-  month: number;
-}
-
-export function getLedgerPeriods(year?: number): LedgerPeriod[] {
-  if (year) {
-    return db
-      .prepare("SELECT * FROM ledger_periods WHERE year = ? ORDER BY month")
-      .all(year) as LedgerPeriod[];
-  }
-  return db
-    .prepare("SELECT * FROM ledger_periods ORDER BY year DESC, month DESC")
-    .all() as LedgerPeriod[];
-}
-
-export function getLedgerPeriodByYearMonth(
-  year: number,
-  month: number
-): LedgerPeriod | undefined {
-  return db
-    .prepare("SELECT * FROM ledger_periods WHERE year = ? AND month = ?")
-    .get(year, month) as LedgerPeriod | undefined;
-}
-
-export function createLedgerPeriod(year: number, month: number): LedgerPeriod {
-  // Ensure the year exists
-  createLedgerYear(year);
-
-  // Check if period already exists
-  const existing = getLedgerPeriodByYearMonth(year, month);
-  if (existing) return existing;
-
-  const stmt = db.prepare(
-    "INSERT INTO ledger_periods (year, month) VALUES (?, ?)"
-  );
-  const result = stmt.run(year, month);
-
-  return {
-    id: result.lastInsertRowid as number,
-    year,
-    month,
-  };
-}
-
-export function getOrCreateCurrentPeriod(): LedgerPeriod {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-
-  // Ensure year exists
-  createLedgerYear(year);
-
-  // Create all 12 months for the year if they don't exist
-  for (let m = 1; m <= 12; m++) {
-    const existing = getLedgerPeriodByYearMonth(year, m);
-    if (!existing) {
-      db.prepare("INSERT INTO ledger_periods (year, month) VALUES (?, ?)").run(
-        year,
-        m
-      );
-    }
-  }
-
-  // Return the current month's period
-  return getLedgerPeriodByYearMonth(year, month) as LedgerPeriod;
 }
 
 // ============================================
@@ -759,36 +674,6 @@ export interface PeriodSummary {
   transactionCount: number;
 }
 
-export function getPeriodSummary(
-  ledgerPeriodId: number | null
-): PeriodSummary {
-  let query = `
-    SELECT 
-      COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as totalIncome,
-      COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as totalExpenses,
-      COUNT(*) as transactionCount
-    FROM transactions
-  `;
-
-  const params: (number | string)[] = [];
-
-  if (ledgerPeriodId !== null) {
-    query += " WHERE ledgerPeriodId = ?";
-    params.push(ledgerPeriodId);
-  }
-
-  const result = db.prepare(query).get(...params) as {
-    totalIncome: number;
-    totalExpenses: number;
-    transactionCount: number;
-  };
-
-  return {
-    ...result,
-    balance: result.totalIncome - result.totalExpenses,
-  };
-}
-
 export interface CategoryBreakdown {
   categoryId: number | null;
   categoryName: string;
@@ -796,38 +681,6 @@ export interface CategoryBreakdown {
   categoryIcon: string;
   total: number;
   count: number;
-}
-
-export function getCategoryBreakdown(
-  ledgerPeriodId: number | null,
-  type: "income" | "expense"
-): CategoryBreakdown[] {
-  let query = `
-    SELECT 
-      t.categoryId,
-      COALESCE(c.name, 'Uncategorized') as categoryName,
-      COALESCE(c.colorCode, '#6b7280') as categoryColor,
-      COALESCE(c.icon, 'pi-question') as categoryIcon,
-      SUM(t.amount) as total,
-      COUNT(*) as count
-    FROM transactions t
-    LEFT JOIN categories c ON t.categoryId = c.id
-    WHERE t.type = ?
-  `;
-
-  const params: (number | string)[] = [type];
-
-  if (ledgerPeriodId !== null) {
-    query += " AND t.ledgerPeriodId = ?";
-    params.push(ledgerPeriodId);
-  }
-
-  query += `
-    GROUP BY t.categoryId
-    ORDER BY total DESC
-  `;
-
-  return db.prepare(query).all(...params) as CategoryBreakdown[];
 }
 
 // Export the database instance for advanced operations if needed

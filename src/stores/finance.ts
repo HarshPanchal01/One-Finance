@@ -11,7 +11,7 @@ import type {
   CategoryBreakdown,
   SearchOptions,
 } from "../types";
-import { Transaction } from "electron";
+
 
 export const useFinanceStore = defineStore("finance", () => {
   // ============================================
@@ -161,11 +161,58 @@ export const useFinanceStore = defineStore("finance", () => {
     const transactionsIncomeSum = transactionsByIncome.reduce((sum, currentValue) => sum + currentValue.amount,0);
     const transactionsExpenseSum = transactionsByIncome.reduce((sum, currentValue) => sum + currentValue.amount, 0);
 
+    const incomeCategoryBreakdown = new Map<number, CategoryBreakdown>();
+    const expenseCategoryBreakdown = new Map<number, CategoryBreakdown>();
+
+    for(const income of transactionsByIncome){
+
+      const entry = incomeCategoryBreakdown.get(income.id);
+
+      if (entry !== undefined) {
+        entry.count += 1;
+        entry.total += income.amount;
+      } 
+      else{
+
+        if (income.categoryId == undefined || income.categoryName == undefined || income.categoryColor == undefined || income.categoryIcon == undefined) {continue}
+
+        incomeCategoryBreakdown.set(income.categoryId, 
+          { categoryId: income.categoryId,
+            categoryName: income.categoryName,
+            categoryColor: income.categoryColor,
+            categoryIcon: income.categoryIcon,
+            total: income.amount,
+            count: 1
+        });
+      }
+    }
+
+    for(const expense of transactionsByExpense){
+
+      const entry = expenseCategoryBreakdown.get(expense.id);
+      if (entry !== undefined) {
+        entry.count += 1;
+        entry.total += expense.amount;
+      }
+      else{
+        if (expense.categoryId == undefined || expense.categoryName == undefined || expense.categoryColor == undefined || expense.categoryIcon == undefined) {continue}
+        expenseCategoryBreakdown.set(expense.categoryId, 
+          { categoryId: expense.categoryId,
+            categoryName: expense.categoryName,
+            categoryColor: expense.categoryColor,
+            categoryIcon: expense.categoryIcon,
+            total: expense.amount,
+            count: 1
+        });
+      }
+    }
+
     periodSummary.value.balance = transactionsIncomeSum - transactionsExpenseSum;
     periodSummary.value.totalExpenses = transactionsExpenseSum;
     periodSummary.value.totalIncome = transactionsIncomeSum;
 
-    incomeBreakdown.value = ico
+    incomeBreakdown.value = Array.from(incomeCategoryBreakdown.values());
+    expenseBreakdown.value = Array.from(expenseCategoryBreakdown.values());
 
   }
 
@@ -204,8 +251,7 @@ export const useFinanceStore = defineStore("finance", () => {
       // Fetch data for the selected period
       if (currentPeriod.value) {
         fetchTransactionsForPeriodSync(year, month);
-
-        //await fetchPeriodSummary();
+        fetchPeriodSummarySync();
       }
 
       console.log(`[Store] Period data fetched`);
@@ -226,7 +272,7 @@ export const useFinanceStore = defineStore("finance", () => {
       // Fetch Global Data
       await fetchRecentTransactions(5); // Ensure recent list is up to date
       await fetchTransactions(null); // All transactions
-      await fetchPeriodSummary(); // Global summary
+      await fetchPeriodSummarySync(); // Global summary
     } catch (e) {
       error.value = e instanceof Error ? e.message : "Failed to load global data";
       console.error("[Store] Clear period error:", e);
@@ -334,27 +380,8 @@ export const useFinanceStore = defineStore("finance", () => {
   }
 
   async function addTransaction(
-    input: Omit<CreateTransactionInput, "ledgerPeriodId">
+    
   ) {
-    // Determine which period to attach this to.
-    // If Global Mode (currentPeriod is null), we must infer or ask for period.
-    // For now, if currentPeriod is null, we can try to find the period based on the date
-    // or default to "current real world month" if we want to be smart.
-    // BUT the simpler logic is: IF we are in a specific period, use it.
-    // IF we are in Global Mode, we might need the User to specify, or we can auto-assign based on date.
-
-    let targetPeriodId: number;
-
-    if (currentPeriod.value) {
-      targetPeriodId = currentPeriod.value.id;
-    } else {
-      // Global Mode: infer from date
-      const date = new Date(input.date);
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const period = await window.electronAPI.createLedgerPeriod(year, month);
-      targetPeriodId = period.id;
-    }
 
     const newTransaction = await window.electronAPI.createTransaction({
       ...input,
@@ -369,7 +396,7 @@ export const useFinanceStore = defineStore("finance", () => {
         // Add to front if valid
         transactions.value.unshift(newTransaction);
         // Refresh summary
-        await fetchPeriodSummary();
+        await fetchPeriodSummarySync();
     }
 
     return newTransaction;
@@ -396,7 +423,7 @@ export const useFinanceStore = defineStore("finance", () => {
         }
       }
       await fetchRecentTransactions(5); // Update dashboard list
-      await fetchPeriodSummary(); // Refresh summary
+      await fetchPeriodSummarySync(); // Refresh summary
     }
     return updated;
   }
@@ -406,7 +433,7 @@ export const useFinanceStore = defineStore("finance", () => {
     if (success) {
       transactions.value = transactions.value.filter((t) => t.id !== id);
       await fetchRecentTransactions(5); // Update dashboard list
-      await fetchPeriodSummary(); // Refresh summary
+      await fetchPeriodSummarySync(); // Refresh summary
       
       // Also remove from search results if present
       if (isSearching.value) {
@@ -452,27 +479,27 @@ export const useFinanceStore = defineStore("finance", () => {
   // ACTIONS - Summary / Dashboard
   // ============================================
 
-  async function fetchPeriodSummary() {
-    const periodId = currentPeriod.value?.id || null; // null = Global
+  // async function fetchPeriodSummary() {
+  //   const periodId = currentPeriod.value?.id || null; // null = Global
 
-    const summary = await window.electronAPI.getPeriodSummary(periodId);
+  //   const summary = await window.electronAPI.getPeriodSummary(periodId);
 
-    periodSummary.value = summary || {
-      totalIncome: 0,
-      totalExpenses: 0,
-      balance: 0,
-      transactionCount: 0,
-    };
+  //   periodSummary.value = summary || {
+  //     totalIncome: 0,
+  //     totalExpenses: 0,
+  //     balance: 0,
+  //     transactionCount: 0,
+  //   };
 
-    incomeBreakdown.value = await window.electronAPI.getCategoryBreakdown(
-      periodId,
-      "income"
-    );
-    expenseBreakdown.value = await window.electronAPI.getCategoryBreakdown(
-      periodId,
-      "expense"
-    );
-  }
+  //   incomeBreakdown.value = await window.electronAPI.getCategoryBreakdown(
+  //     periodId,
+  //     "income"
+  //   );
+  //   expenseBreakdown.value = await window.electronAPI.getCategoryBreakdown(
+  //     periodId,
+  //     "expense"
+  //   );
+  // }
 
   // ============================================
   // RETURN STORE
@@ -519,7 +546,6 @@ export const useFinanceStore = defineStore("finance", () => {
     removeTransaction,
     searchTransactions,
     clearSearch,
-    fetchPeriodSummary,
     fetchAccounts,
     fetchAccountTypes,
     removeAccount,

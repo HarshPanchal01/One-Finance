@@ -86,24 +86,6 @@ const electronAPI = {
     ipcRenderer.invoke("db:deleteLedgerYear", year),
 
   // ============================================
-  // LEDGER PERIODS
-  // ============================================
-  getLedgerPeriods: (year?: number): Promise<LedgerPeriod[]> =>
-    ipcRenderer.invoke("db:getLedgerPeriods", year),
-
-  getLedgerPeriodByYearMonth: (
-    year: number,
-    month: number
-  ): Promise<LedgerPeriod | undefined> =>
-    ipcRenderer.invoke("db:getLedgerPeriodByYearMonth", year, month),
-
-  createLedgerPeriod: (year: number, month: number): Promise<LedgerPeriod> =>
-    ipcRenderer.invoke("db:createLedgerPeriod", year, month),
-
-  getOrCreateCurrentPeriod: (): Promise<LedgerPeriod> =>
-    ipcRenderer.invoke("db:getOrCreateCurrentPeriod"),
-
-  // ============================================
   // CATEGORIES
   // ============================================
   getCategories: (): Promise<Category[]> =>
@@ -179,18 +161,6 @@ const electronAPI = {
     limit?: number
   ): Promise<TransactionWithCategory[]> =>
     ipcRenderer.invoke("db:searchTransactions", options, limit),
-
-  // ============================================
-  // SUMMARY / DASHBOARD
-  // ============================================
-  getPeriodSummary: (ledgerPeriodId: number | null): Promise<PeriodSummary> =>
-    ipcRenderer.invoke("db:getPeriodSummary", ledgerPeriodId),
-
-  getCategoryBreakdown: (
-    ledgerPeriodId: number | null,
-    type: "income" | "expense"
-  ): Promise<CategoryBreakdown[]> =>
-    ipcRenderer.invoke("db:getCategoryBreakdown", ledgerPeriodId, type),
 
   // ============================================
   // SYSTEM OPERATIONS
