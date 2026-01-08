@@ -148,7 +148,7 @@ import { useFinanceStore } from '@/stores/finance';
 import AccountListView from './components/AccountListView.vue';
 import { Account } from '@/types';
 import ErrorModal from '@/components/ErrorModal.vue';
-import AccountDeleteModal from '@/components/AccountDeleteModal.vue';
+import AccountDeleteModal from './components/AccountDeleteModal.vue';
 
 const props = defineProps<{
   highlightAccountId?: number | null;

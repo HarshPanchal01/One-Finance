@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import type {
-  LedgerPeriod,
   Category,
   Account,
   AccountType,
@@ -10,6 +9,7 @@ import type {
   PeriodSummary,
   CategoryBreakdown,
   SearchOptions,
+  LedgerMonth,
 } from "../types";
 
 
@@ -19,9 +19,9 @@ export const useFinanceStore = defineStore("finance", () => {
   // ============================================
 
   // Current period selection
-  const currentPeriod = ref<LedgerPeriod | null>(null);
+  const currentLedgerMonth = ref<LedgerMonth | null>(null);
   const ledgerYears = ref<number[]>([]);
-  const ledgerPeriods = ref<LedgerPeriod[]>([]);
+  const ledgerMonths = ref<LedgerMonth[]>([]);
 
   // Categories
   const categories = ref<Category[]>([]);
@@ -59,7 +59,7 @@ export const useFinanceStore = defineStore("finance", () => {
   // GETTERS (Computed)
   // ============================================
 
-  const hasCurrentPeriod = computed(() => currentPeriod.value !== null);
+  const hasCurrentPeriod = computed(() => currentLedgerMonth.value !== null);
 
   const incomeTransactions = computed(() =>
     transactions.value.filter((t) => t.type === "income")
@@ -104,7 +104,7 @@ export const useFinanceStore = defineStore("finance", () => {
         "[Store] Years:",
         ledgerYears.value,
         "Periods:",
-        ledgerPeriods.value.length
+        ledgerMonths.value.length
       );
 
       // Default to Global View (no current period)
@@ -128,14 +128,13 @@ export const useFinanceStore = defineStore("finance", () => {
 
   function createLedgerPeriodSync(year: number){
     for (let month = 1; month <= 12; month++) {
-      const id = 0;
-      const period = {id, year, month};
-      ledgerPeriods.value.push(period);
+      const period = {month, year};
+      ledgerMonths.value.push(period);
     }
   }
 
   function deleteLedgerPeriodsByYearSync(year: number){
-    ledgerPeriods.value = ledgerPeriods.value.filter((item) => item.year !== year);
+    ledgerMonths.value = ledgerMonths.value.filter((item) => item.year !== year);
   }
 
 
@@ -221,7 +220,6 @@ export const useFinanceStore = defineStore("finance", () => {
     createLedgerPeriodSync(year);
     // Auto-create all 12 months for the year
     ledgerYears.value = await window.electronAPI.getLedgerYears();
-    ledgerPeriods.value;
   }
 
   async function deleteYear(year: number) {
@@ -231,7 +229,7 @@ export const useFinanceStore = defineStore("finance", () => {
     //ledgerPeriods.value = await window.electronAPI.getLedgerPeriods();
 
     // If deleted current period's year, reset to Global
-    if (currentPeriod.value?.year === year) {
+    if (currentLedgerMonth.value?.year === year) {
       await clearPeriod();
     }
   }
@@ -242,14 +240,14 @@ export const useFinanceStore = defineStore("finance", () => {
     error.value = null;
 
     try {
-      currentPeriod.value = {id: 0, year: year, month: month};
-      console.log(`[Store] currentPeriod set to:`, currentPeriod.value);
+      currentLedgerMonth.value = {year: year, month: month};
+      console.log(`[Store] currentPeriod set to:`, currentLedgerMonth.value);
 
       // Refresh periods list in case a new one was created
       //ledgerPeriods.value = await window.electronAPI.getLedgerPeriods();
 
       // Fetch data for the selected period
-      if (currentPeriod.value) {
+      if (currentLedgerMonth.value) {
         fetchTransactionsForPeriodSync(year, month);
         fetchPeriodSummarySync();
       }
@@ -266,12 +264,12 @@ export const useFinanceStore = defineStore("finance", () => {
   async function clearPeriod() {
     console.log("[Store] clearPeriod called (Global Mode)");
     isChangingPeriod.value = true;
-    currentPeriod.value = null;
+    currentLedgerMonth.value = null;
 
     try {
       // Fetch Global Data
       await fetchRecentTransactions(5); // Ensure recent list is up to date
-      await fetchTransactions(null); // All transactions
+      await fetchTransactions(); // All transactions
       await fetchPeriodSummarySync(); // Global summary
     } catch (e) {
       error.value = e instanceof Error ? e.message : "Failed to load global data";
@@ -368,8 +366,8 @@ export const useFinanceStore = defineStore("finance", () => {
   // ACTIONS - Transactions
   // ============================================
 
-  async function fetchTransactions(periodId?: number | null) {
-    transactions.value = await window.electronAPI.getTransactions(periodId);
+  async function fetchTransactions(ledgerMonth? : LedgerMonth) {
+    transactions.value = await window.electronAPI.getTransactions(ledgerMonth);
   }
 
   async function fetchRecentTransactions(limit: number) {
@@ -379,24 +377,27 @@ export const useFinanceStore = defineStore("finance", () => {
     );
   }
 
-  async function addTransaction(
+  async function addTransaction(transaction: CreateTransactionInput
     
   ) {
 
-    const newTransaction = await window.electronAPI.createTransaction({
-      ...input,
-      ledgerPeriodId: targetPeriodId,
-    });
+    const newTransaction = await window.electronAPI.createTransaction(
+      transaction,
+    );
+
+    const targetPeriodDate = transaction.date.split("-");
+    const targetPeriodMonth = targetPeriodDate.at(1);
+
 
     // Refresh Data
     await fetchRecentTransactions(5);
 
     // Only update main list if it matches current filter (Global or Specific Period)
-    if (!currentPeriod.value || currentPeriod.value.id === targetPeriodId) {
+    if (!currentLedgerMonth.value || currentLedgerMonth.value.month.toString() === targetPeriodMonth) {
         // Add to front if valid
         transactions.value.unshift(newTransaction);
         // Refresh summary
-        await fetchPeriodSummarySync();
+        fetchPeriodSummarySync();
     }
 
     return newTransaction;
@@ -413,10 +414,10 @@ export const useFinanceStore = defineStore("finance", () => {
         // If the date changed such that it moves out of the current view (if period specific),
         // we might want to remove it. But for simplicity, we just update it in place or re-fetch.
         // Re-fetching is safer.
-        if (currentPeriod.value) {
+        if (currentLedgerMonth.value) {
             // Check if it still belongs?
             // Easier to just re-fetch the list to be safe
-             await fetchTransactions(currentPeriod.value.id);
+             await fetchTransactions(currentLedgerMonth.value);
         } else {
              // Global mode, just update
              transactions.value[index] = updated;
@@ -502,14 +503,14 @@ export const useFinanceStore = defineStore("finance", () => {
   // }
 
   // ============================================
-  // RETURN STORE
+  // RETURN STORE 
   // ============================================
 
   return {
     // State
-    currentPeriod,
+    currentLedgerMonth,
     ledgerYears,
-    ledgerPeriods,
+    ledgerMonths,
     categories,
     accounts,
     accountTypes,

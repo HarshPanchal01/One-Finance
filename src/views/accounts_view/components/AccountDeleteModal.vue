@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import type { Account } from "../types";
-import { useFinanceStore } from "../stores/finance";
+import type { Account } from "../../../types";
+import { useFinanceStore } from "../../../stores/finance";
 
 const props = defineProps<{
   visible: boolean;

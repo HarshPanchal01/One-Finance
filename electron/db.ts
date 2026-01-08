@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import fs from "node:fs";
 import { app } from "electron";
-import { Account, AccountType } from "@/types";
+import { Account, AccountType, Category, CreateTransactionInput, LedgerMonth, SearchOptions, TransactionWithCategory } from "@/types";
 
 // Use createRequire for native module (better-sqlite3)
 const require = createRequire(import.meta.url);
@@ -100,7 +100,6 @@ export function initializeDatabase(): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS transactions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      ledgerPeriodId INTEGER NOT NULL,
       title TEXT NOT NULL,
       amount REAL NOT NULL,
       date TEXT NOT NULL,
@@ -131,11 +130,9 @@ export function initializeDatabase(): void {
 
   // Create indexes for better query performance
   db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_transactions_ledger_period ON transactions(ledgerPeriodId);
     CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(categoryId);
     CREATE INDEX IF NOT EXISTS idx_transactions_account ON transactions(accountId);
     CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
-    CREATE INDEX IF NOT EXISTS idx_ledger_periods_year ON ledger_periods(year);
   `);
 
   console.log(`[DB] Database initialized at: ${dbPath}`);
@@ -366,8 +363,6 @@ export function deleteAccount(account: Account): void {
 
   db.prepare("DELETE FROM accountType WHERE id = ?").run(account.id);
 
-
-
 }
 
 
@@ -377,12 +372,7 @@ export function deleteAccount(account: Account): void {
 // CATEGORIES OPERATIONS
 // ============================================
 
-export interface Category {
-  id: number;
-  name: string;
-  colorCode: string;
-  icon: string;
-}
+
 
 export function getCategories(): Category[] {
   return db
@@ -436,46 +426,6 @@ export function deleteCategory(id: number): boolean {
 // ============================================
 // TRANSACTIONS OPERATIONS
 // ============================================
-
-export interface Transaction {
-  id: number;
-  ledgerPeriodId: number;
-  title: string;
-  amount: number;
-  date: string;
-  type: "income" | "expense";
-  notes: string | null;
-  categoryId: number | null;
-  accountId: number | null;
-}
-
-export interface TransactionWithCategory extends Transaction {
-  categoryName: string | null;
-  categoryColor: string | null;
-  categoryIcon: string | null;
-}
-
-export interface CreateTransactionInput {
-  ledgerPeriodId: number;
-  title: string;
-  amount: number;
-  date: string;
-  type: "income" | "expense";
-  notes?: string;
-  categoryId?: number;
-  accountId?: number;
-}
-
-export interface SearchOptions {
-  text?: string;
-  categoryIds?: number[];
-  accountIds?: number[];
-  fromDate?: string | null;
-  toDate?: string | null;
-  minAmount?: number | null;
-  maxAmount?: number | null;
-  type?: "income" | "expense" | null;
-}
 
 export function searchTransactions(
   options: SearchOptions,
@@ -557,8 +507,8 @@ export function searchTransactions(
 }
 
 export function getTransactions(
-  ledgerPeriodId?: number | null,
-  limit?: number
+  ledgerMonth?: LedgerMonth,
+  limit?: number,
 ): TransactionWithCategory[] {
   const baseQuery = `
     SELECT 
@@ -573,11 +523,6 @@ export function getTransactions(
   let query = baseQuery;
   const params: (number | string)[] = [];
 
-  if (ledgerPeriodId) {
-    query += " WHERE t.ledgerPeriodId = ?";
-    params.push(ledgerPeriodId);
-  }
-
   query += " ORDER BY t.date DESC, t.id DESC";
 
   if (limit) {
@@ -585,7 +530,21 @@ export function getTransactions(
     params.push(limit);
   }
 
-  return db.prepare(query).all(...params) as TransactionWithCategory[];
+  const result = db.prepare(query).all(...params) as TransactionWithCategory[];
+
+  if(ledgerMonth == undefined) {
+    return result;
+  }
+
+  const transactions = result.filter((item) => {
+    let dateList = item.date.split("-");
+    let transactionMonth = dateList[1];
+    let transactionYear = dateList[0];
+
+    return transactionMonth === ledgerMonth.month.toString() && transactionYear === ledgerMonth.year.toString();
+  });
+
+  return transactions;
 }
 
 export function getTransactionById(
@@ -611,12 +570,11 @@ export function createTransaction(
   input: CreateTransactionInput
 ): TransactionWithCategory {
   const stmt = db.prepare(`
-    INSERT INTO transactions (ledgerPeriodId, title, amount, date, type, notes, categoryId, accountId)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO transactions (title, amount, date, type, notes, categoryId, accountId)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = stmt.run(
-    input.ledgerPeriodId,
     input.title,
     input.amount,
     input.date,
@@ -638,12 +596,11 @@ export function updateTransaction(
 
   const stmt = db.prepare(`
     UPDATE transactions 
-    SET ledgerPeriodId = ?, title = ?, amount = ?, date = ?, type = ?, notes = ?, categoryId = ?, accountId = ?
+    SET title = ?, amount = ?, date = ?, type = ?, notes = ?, categoryId = ?, accountId = ?
     WHERE id = ?
   `);
 
   stmt.run(
-    input.ledgerPeriodId ?? current.ledgerPeriodId,
     input.title ?? current.title,
     input.amount ?? current.amount,
     input.date ?? current.date,
@@ -661,26 +618,6 @@ export function deleteTransaction(id: number): boolean {
   const stmt = db.prepare("DELETE FROM transactions WHERE id = ?");
   const result = stmt.run(id);
   return result.changes > 0;
-}
-
-// ============================================
-// DASHBOARD / SUMMARY OPERATIONS
-// ============================================
-
-export interface PeriodSummary {
-  totalIncome: number;
-  totalExpenses: number;
-  balance: number;
-  transactionCount: number;
-}
-
-export interface CategoryBreakdown {
-  categoryId: number | null;
-  categoryName: string;
-  categoryColor: string;
-  categoryIcon: string;
-  total: number;
-  count: number;
 }
 
 // Export the database instance for advanced operations if needed

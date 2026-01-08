@@ -1,8 +1,6 @@
-// Interfaces
-export interface LedgerPeriod {
-  id: number;
-  year: number;
+export interface LedgerMonth{
   month: number;
+  year: number;
 }
 
 export interface Category {
@@ -46,7 +44,6 @@ export interface TransactionWithCategory extends Transaction {
 }
 
 export interface CreateTransactionInput {
-  ledgerPeriodId: number;
   title: string;
   amount: number;
   date: string;
