@@ -129,6 +129,12 @@ export const useFinanceStore = defineStore("finance", () => {
   function createLedgerPeriodSync(year: number){
     for (let month = 1; month <= 12; month++) {
       const period = {month, year};
+
+      //Prevents duplicates when rebuilding UI (UI bug when running developer mode, not sure if it happens in production though)
+      if (ledgerMonths.value.filter((value) => value.month === month && value.year === year).length > 0){
+        continue;
+      }
+
       ledgerMonths.value.push(period);
     }
   }
@@ -142,10 +148,10 @@ export const useFinanceStore = defineStore("finance", () => {
     transactions.value = transactions.value.filter((value) => {
       const strDate = value.date;
       const dateList = strDate.split("-");
-      const dateYear = dateList.at(0);
-      const dateMonth = dateList.at(1);
+      const dateYear = Number(dateList.at(0));
+      const dateMonth = Number(dateList.at(1));
 
-      return dateMonth === month.toString() && dateYear === year.toString();
+      return dateMonth === month && dateYear === year;
     });
   }
 
@@ -367,6 +373,11 @@ export const useFinanceStore = defineStore("finance", () => {
   // ============================================
 
   async function fetchTransactions(ledgerMonth? : LedgerMonth) {
+
+    const result = await window.electronAPI.getTransactions(ledgerMonth);
+
+    console.log(result);
+
     transactions.value = await window.electronAPI.getTransactions(ledgerMonth);
   }
 
@@ -386,14 +397,14 @@ export const useFinanceStore = defineStore("finance", () => {
     );
 
     const targetPeriodDate = transaction.date.split("-");
-    const targetPeriodMonth = targetPeriodDate.at(1);
+    const targetPeriodMonth = Number(targetPeriodDate.at(1));
 
 
     // Refresh Data
     await fetchRecentTransactions(5);
 
     // Only update main list if it matches current filter (Global or Specific Period)
-    if (!currentLedgerMonth.value || currentLedgerMonth.value.month.toString() === targetPeriodMonth) {
+    if (!currentLedgerMonth.value || currentLedgerMonth.value.month === targetPeriodMonth) {
         // Add to front if valid
         transactions.value.unshift(newTransaction);
         // Refresh summary

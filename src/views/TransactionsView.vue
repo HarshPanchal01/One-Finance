@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, toRaw } from "vue";
 import { useFinanceStore } from "../stores/finance";
 import { formatCurrency } from "../types";
 import type { Transaction, TransactionWithCategory } from "../types";
@@ -19,7 +19,7 @@ const confirmModal = ref<InstanceType<typeof ConfirmationModal>>();
 onMounted(() => {
   // If a period is already selected (from Sidebar), fetch for that period.
   // If not (Global Mode), fetch all.
-  const ledgerMonth = store.currentLedgerMonth ?? undefined;
+  const ledgerMonth = toRaw(store.currentLedgerMonth) ?? undefined;
   store.fetchTransactions(ledgerMonth);
 });
 
@@ -27,8 +27,11 @@ onMounted(() => {
 watch(
   () => store.currentLedgerMonth,
   async (newLedgerMonth) => {
-    const newMonth = newLedgerMonth ?? undefined;
-    await store.fetchTransactions(newMonth);
+    const plainMonth = newLedgerMonth
+      ? toRaw(newLedgerMonth)
+      : undefined;
+
+    await store.fetchTransactions(plainMonth);
   }
 );
 
