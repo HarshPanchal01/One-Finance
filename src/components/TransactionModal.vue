@@ -36,7 +36,10 @@ onUnmounted(() => {
 const form = ref({
   title: "",
   amount: 0,
-  date: new Date().toISOString().split("T")[0],
+  date: (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  })(),
   type: "expense" as "income" | "expense",
   categoryId: null as number | null,
   accountId: null as number | null,
@@ -55,7 +58,8 @@ function getDefaultDate(): string {
       "0"
     )}-${String(safeDay).padStart(2, "0")}`;
   }
-  return new Date().toISOString().split("T")[0];
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 // Reset form when modal opens
