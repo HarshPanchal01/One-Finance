@@ -128,18 +128,22 @@ function verifyImportData(data: {
       return false
     }
 
+    let forEachResult = true;
+    
     accounts.forEach((value) => {
 
       // Accounts essentials
       if (value.accountName == undefined || value.accountTypeId == undefined || value.id == undefined || value.startingBalance == undefined || value.isDefault == undefined){
-        return false;
+        forEachResult = false;
+        return;
       }
 
       // Check if account type id is values
       if (accountTypes.find((accountTypeValue) => accountTypeValue.id === value.accountTypeId) == undefined){
-        return false;
+        forEachResult = false;
+        return;
       }
-    })
+    });
 
     transactions.forEach((value) => {
 
@@ -152,51 +156,60 @@ function verifyImportData(data: {
         value.type == undefined ||
         value.accountId == undefined
       ){
-        return false;
+        forEachResult = false;
+        return;
       }
 
       // Check if category provided in transaction is valid
       if (value.categoryId != undefined){
         if (value.categoryName == undefined || value.categoryColor == undefined || value.categoryIcon == undefined){
-          return false;
+          forEachResult = false;
+          return;
         }
         if (categories.find((categoryValue) => categoryValue.id === value.categoryId) == undefined){
-          return false;
+          forEachResult = false;
+          return;
         }
         if (!isValidHexColor(value.categoryColor)){
-          return false;
+          forEachResult = false;
+          return;
         }
       }
 
       // Check if account provided in transaction is valid
       if (accounts.find((accountValue) => accountValue.id === value.accountId) == undefined){
-        return false;
+        forEachResult = false;
+        return;
       }
 
-    })
+    });
 
     accountTypes.forEach((value) => {
       if (value.id == undefined || value.type == undefined){
-        return false;
+        forEachResult = false;
+        return;
       }
-    })
+    });
 
     categories.forEach((value) => {
       if (value.id == undefined || value.name == undefined || value.colorCode == undefined || value.icon == undefined){
-        return false;
+        forEachResult = false;
+        return;
       }
       if (!isValidHexColor(value.colorCode)){
-        return false;
+        forEachResult = false;
+        return;
       }
-    })
+    });
 
     ledgerYears.forEach((value) => {
       if (value == undefined){
-        return false;
+        forEachResult = false;
+        return;
       }
-    })
+    });
 
-    return true;
+    return forEachResult;
   } catch(e){
     console.log(`Error verifying import data ${e}`)
     return false;
