@@ -209,6 +209,20 @@ export function deleteAllDataFromTables(): void{
   }
 }
 
+export function deleteAllDataFromTables(): void{
+  const tables = [
+    "transactions",
+    "accounts",
+    "accountType",
+    "categories",
+    "ledger_periods",
+    "ledger_years"
+  ];
+  for (const table of tables){
+    db.prepare(`DELETE FROM ${table}`).run();
+  }
+}
+
 // ============================================
 // LEDGER YEARS OPERATIONS
 // ============================================
@@ -225,6 +239,14 @@ export function createLedgerYear(year: number): number {
     "INSERT OR IGNORE INTO ledger_years (year) VALUES (?)"
   );
   stmt.run(year);
+  return year;
+}
+
+export function createLedgerYearWithId(year: number, id: number): number {
+  const stmt = db.prepare(
+    "INSERT OR IGNORE INTO ledger_years (id, year) VALUES (?,?)"
+  );
+  stmt.run(id, year);
   return year;
 }
 
