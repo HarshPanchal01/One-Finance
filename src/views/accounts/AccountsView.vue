@@ -190,6 +190,7 @@ function highlightAccount(id?: number | null) {
 
 onMounted(async () => {
   await store.fetchAccounts();
+  await store.fetchAccountTypes();
   state.accountArray = store.accounts;
   highlightAccount(props.highlightAccountId);
 });

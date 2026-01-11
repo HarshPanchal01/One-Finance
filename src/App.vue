@@ -11,7 +11,7 @@ import TransactionModal from "@/components/TransactionModal.vue";
 import DashboardView from "@/views/DashboardView.vue";
 import TransactionsView from "@/views/TransactionsView.vue";
 import CategoriesView from "@/views/CategoriesView.vue";
-import SettingsView from "@/views/SettingsView.vue";
+import SettingsView from "@/views/settings/SettingsView.vue";
 import AccountsView from "@/views/accounts/AccountsView.vue";
 const store = useFinanceStore();
 

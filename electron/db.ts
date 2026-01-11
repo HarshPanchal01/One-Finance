@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import fs from "node:fs";
 import { app } from "electron";
-import { Account, AccountType, Category, CreateTransactionInput, LedgerMonth, SearchOptions, TransactionWithCategory } from "@/types";
+import { Account, AccountType, Category, CreateTransactionInput, LedgerMonth, SearchOptions, Transaction, TransactionWithCategory } from "@/types";
 
 // Use createRequire for native module (better-sqlite3)
 const require = createRequire(import.meta.url);
@@ -195,6 +195,19 @@ function seedDefaultAccountData(): void{
   console.log("Account Data Seeded")
 }
 
+export function deleteAllDataFromTables(): void{
+  const tables = [
+    "transactions",
+    "accounts",
+    "accountType",
+    "categories",
+    "ledger_years"
+  ];
+  for (const table of tables){
+    db.prepare(`DELETE FROM ${table}`).run();
+  }
+}
+
 // ============================================
 // LEDGER YEARS OPERATIONS
 // ============================================
@@ -211,6 +224,14 @@ export function createLedgerYear(year: number): number {
     "INSERT OR IGNORE INTO ledger_years (year) VALUES (?)"
   );
   stmt.run(year);
+  return year;
+}
+
+export function createLedgerYearWithId(year: number, id: number): number {
+  const stmt = db.prepare(
+    "INSERT OR IGNORE INTO ledger_years (id, year) VALUES (?,?)"
+  );
+  stmt.run(id, year);
   return year;
 }
 
@@ -255,22 +276,35 @@ export function getAccountTypeById(id: number): AccountType | undefined{
   return db.prepare("SELECT  * FROM accountType WHERE id = ?").get(id) as AccountType | undefined;
 }
 
-export function insertAccount(account: Account): void{
+export function insertAccount(account: Account): number | null{
 
-  if (account.isDefault){
-    resetDefault();
+  try {
+    if (account.isDefault){
+      resetDefault();
+    }
+  
+    const insert = db.prepare("INSERT INTO accounts (accountName, institutionName, startingBalance, accountTypeId, isDefault) VALUES (?,?,?,?,?)");
+    const result = insert.run(account.accountName, account.institutionName, account.startingBalance, account.accountTypeId, Number(account.isDefault));
+
+    return Number(result.lastInsertRowid);
+  } catch (error) {
+    return null;
   }
-
-  const insert = db.prepare("INSERT INTO accounts (accountName, institutionName, startingBalance, accountTypeId, isDefault) VALUES (?,?,?,?,?)");
-  insert.run(account.accountName, account.institutionName, account.startingBalance, account.accountTypeId, Number(account.isDefault));
 }
 
-export function insertAccountType(accountType: AccountType): void{
-  const insert = db.prepare("INSERT INTO accountType (type) VALUES (?)");
-  insert.run(accountType.type);
+export function insertAccountType(accountType: AccountType): number | null {
+  try {
+    const result = db
+      .prepare("INSERT INTO accountType (type) VALUES (?)")
+      .run(accountType.type);
+
+    return Number(result.lastInsertRowid);
+  } catch (err) {
+    return null;
+  }
 }
 
-export function resetDefault(): void {
+export async function resetDefault(): Promise<void> {
   db.prepare("UPDATE accounts SET isDefault = false WHERE isDefault = true").run();
 }
 
@@ -416,6 +450,11 @@ export function createCategory(
     colorCode,
     icon,
   };
+}
+
+export function insertCategoryWithId(category: Category): void{
+  const insert = db.prepare("INSERT INTO categories (id, name, colorCode, icon) VALUES (?,?,?,?)");
+  insert.run(category.id, category.name, category.colorCode, category.icon);
 }
 
 export function updateCategory(
@@ -599,6 +638,24 @@ export function createTransaction(
   );
 
   return getTransactionById(result.lastInsertRowid as number)!;
+}
+
+export function insertTransactionWithId(transaction: Transaction): void{
+  const insert = db.prepare(`
+    INSERT INTO transactions (id, ledgerPeriodId, title, amount, date, type, notes, categoryId, accountId)
+    VALUES (?,?,?,?,?,?,?,?,?)
+  `);
+  insert.run(
+    transaction.id,
+    transaction.ledgerPeriodId,
+    transaction.title,
+    transaction.amount,
+    transaction.date,
+    transaction.type,
+    transaction.notes,
+    transaction.categoryId,
+    transaction.accountId
+  );
 }
 
 export function updateTransaction(

@@ -1,4 +1,4 @@
-import { Account, AccountType, Category, CreateTransactionInput, LedgerMonth, SearchOptions, TransactionWithCategory } from "@/types";
+import { Account, AccountType, Category, CreateTransactionInput, LedgerMonth, LedgerYear, SearchOptions, TransactionWithCategory } from "@/types";
 import { ipcRenderer, contextBridge } from "electron";
 
 // The API exposed to the renderer process
@@ -50,8 +50,8 @@ const electronAPI = {
   getAccountTypes: (): Promise<AccountType[]> => ipcRenderer.invoke("db:getAccountTypes"),
   getAccountById: (id: number): Promise<Account | undefined> => ipcRenderer.invoke("db:getTransactions", id),
   getAccountTypeById: (id: number): Promise<AccountType | undefined> => ipcRenderer.invoke("db:getAccountTypeById", id),
-  insertAccount: (account: Account): Promise<void> => ipcRenderer.invoke("db:insertAccount", account),
-  insertAccountType: (accountType: AccountType): Promise<void> => ipcRenderer.invoke("db:insertAccountType", accountType),
+  insertAccount: (account: Account): Promise<number | null> => ipcRenderer.invoke("db:insertAccount", account),
+  insertAccountType: (accountType: AccountType): Promise<number | null> => ipcRenderer.invoke("db:insertAccountType", accountType),
   resetDefault: (): Promise<void> => ipcRenderer.invoke("db:resetDefault"),
   editAccount: (account: Account): Promise<Account | undefined> => ipcRenderer.invoke("db:editAccount", account),
   editAccountType: (accountType: AccountType): Promise<AccountType | undefined> => ipcRenderer.invoke("db:editAccountType", accountType),
@@ -95,6 +95,9 @@ const electronAPI = {
   // ============================================
   // SYSTEM OPERATIONS
   // ============================================
+
+  deleteAllDataFromTables: (): Promise<void> => ipcRenderer.invoke("db:deleteAllDataFromTables"),
+
   getDbPath: (): Promise<string> => ipcRenderer.invoke("system:getDbPath"),
 
   openDbLocation: (): Promise<void> =>
@@ -102,6 +105,18 @@ const electronAPI = {
 
   deleteDatabase: (): Promise<boolean> =>
     ipcRenderer.invoke("system:deleteDatabase"),
+
+  exportDatabase: (payload : {data: string, defaultName?: string}): Promise<{success:boolean}> =>
+    ipcRenderer.invoke("save-file", payload),
+
+  importDatabase: () : Promise<{success: boolean, filepath? : string, data? : {
+    accounts?: Account[],
+    transactions?: TransactionWithCategory[],
+    categories?: Category[],
+    accountTypes?: AccountType[],
+    ledgerYears?: number[],
+  }}> =>
+    ipcRenderer.invoke("import-file"),
 
   // ============================================
   // GENERIC IPC (for future use)

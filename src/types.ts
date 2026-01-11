@@ -3,6 +3,11 @@ export interface LedgerMonth{
   year: number;
 }
 
+export interface LedgerYear{
+  id: number;
+  year: number;
+}
+
 export interface Category {
   id: number;
   name: string;
