@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from "vue";
+import { computed, onMounted, watch, ref } from "vue";
 import { useFinanceStore } from "@/stores/finance";
-import { formatCurrency } from "@/utils";
+import { formatCurrency, getMetricsForRange, getTimeRangeLabel } from "@/utils";
 import CashFlowChart from "@/components/charts/CashFlowChart.vue";
 import PacingChart from "@/components/charts/PacingChart.vue";
 import ExpenseBreakdownChart from "@/components/charts/ExpenseBreakdownChart.vue";
@@ -33,47 +33,29 @@ watch(() => store.currentLedgerMonth, async () => {
 // METRICS
 // ===============================================
 
+const savingsTimeRange = ref<string>('thisMonth');
+const avgSpendTimeRange = ref<string>('thisMonth');
+const netCashFlowTimeRange = ref<string>('thisMonth');
+
+const savingsData = computed(() => getMetricsForRange(savingsTimeRange.value, store.transactions));
+const avgSpendData = computed(() => getMetricsForRange(avgSpendTimeRange.value, store.transactions));
+const netCashFlowData = computed(() => getMetricsForRange(netCashFlowTimeRange.value, store.transactions));
+
 const savingsRate = computed(() => {
-  const income = store.periodSummary.totalIncome;
-  const expenses = store.periodSummary.totalExpenses;
+  const { income, expense } = savingsData.value;
   if (income === 0) return 0;
-  return ((income - expenses) / income) * 100;
+  return ((income - expense) / income) * 100;
 });
 
 const avgDailySpend = computed(() => {
-  const expenses = store.periodSummary.totalExpenses;
-  
-  // Calculate days elapsed
-  const now = new Date();
-  let daysElapsed = 1;
-  
-  if (store.currentLedgerMonth) {
-    const year = store.currentLedgerMonth.year;
-    const month = store.currentLedgerMonth.month;
-    
-    // If it's the current real-world month
-    if (year === now.getFullYear() && month === now.getMonth() + 1) {
-      daysElapsed = now.getDate();
-    } else {
-      // Full month
-      daysElapsed = new Date(year, month, 0).getDate();
-    }
-  } else if (store.selectedYear) {
-      // Selected Year - Average over 365 or days elapsed so far?
-      if (store.selectedYear === now.getFullYear()){
-          // Days from Jan 1 to Now
-          const start = new Date(store.selectedYear, 0, 1);
-          const diff = now.getTime() - start.getTime();
-          daysElapsed = Math.ceil(diff / (1000 * 3600 * 24)); 
-      } else {
-          daysElapsed = 365; // Approximate
-      }
-  } else {
-      return 0; 
-  }
+  const { expense, days } = avgSpendData.value;
+  if (days === 0) return 0;
+  return expense / days;
+});
 
-  if (daysElapsed === 0) return 0;
-  return expenses / daysElapsed;
+const netCashFlow = computed(() => {
+    const { income, expense } = netCashFlowData.value;
+    return income - expense;
 });
 </script>
 
@@ -92,8 +74,21 @@ const avgDailySpend = computed(() => {
         class="card p-4 flex flex-col justify-between border-l-4"
         :class="savingsRate >= 20 ? 'border-success' : (savingsRate > 0 ? 'border-warning' : 'border-expense')"
       >
-        <div class="text-gray-500 text-sm font-medium uppercase">
-          Savings Rate
+        <div class="flex justify-between items-start">
+            <div class="text-gray-500 text-sm font-medium uppercase">
+              Savings Rate
+            </div>
+            <!-- Dropdown -->
+            <select 
+                v-model="savingsTimeRange"
+                class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
+            >
+                <option value="thisMonth">This Month</option>
+                <option value="last3Months">Last 3 Months</option>
+                <option value="last6Months">Last 6 Months</option>
+                <option value="lastYear">Last Year</option>
+                <option value="allTime">All Time</option>
+            </select>
         </div>
         <div class="text-3xl font-bold mt-2 text-gray-800 dark:text-white">
           {{ savingsRate.toFixed(1) }}%
@@ -105,33 +100,59 @@ const avgDailySpend = computed(() => {
 
       <!-- Avg Daily Spend -->
       <div class="card p-4 flex flex-col justify-between border-l-4 border-primary-500">
-        <div class="text-gray-500 text-sm font-medium uppercase">
-          Avg Daily Spend
+        <div class="flex justify-between items-start">
+            <div class="text-gray-500 text-sm font-medium uppercase">
+              Avg Daily Spend
+            </div>
+            <!-- Dropdown -->
+            <select 
+                v-model="avgSpendTimeRange"
+                class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
+            >
+                <option value="thisMonth">This Month</option>
+                <option value="last3Months">Last 3 Months</option>
+                <option value="last6Months">Last 6 Months</option>
+                <option value="lastYear">Last Year</option>
+                <option value="allTime">All Time</option>
+            </select>
         </div>
         <div class="text-3xl font-bold mt-2 text-gray-800 dark:text-white">
           {{ formatCurrency(avgDailySpend) }}
         </div>
         <div class="text-xs text-gray-400 mt-1">
-          Based on elapsed days
+          Based on {{ getTimeRangeLabel(avgSpendTimeRange) }}
         </div>
       </div>
 
       <!-- Net Cash Flow -->
       <div
         class="card p-4 flex flex-col justify-between border-l-4"
-        :class="store.periodSummary.balance >= 0 ? 'border-success' : 'border-expense'"
+        :class="netCashFlow >= 0 ? 'border-success' : 'border-expense'"
       >
-        <div class="text-gray-500 text-sm font-medium uppercase">
-          Net Cash Flow
+        <div class="flex justify-between items-start">
+            <div class="text-gray-500 text-sm font-medium uppercase">
+              Net Cash Flow
+            </div>
+            <!-- Dropdown -->
+            <select 
+                v-model="netCashFlowTimeRange"
+                class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
+            >
+                <option value="thisMonth">This Month</option>
+                <option value="last3Months">Last 3 Months</option>
+                <option value="last6Months">Last 6 Months</option>
+                <option value="lastYear">Last Year</option>
+                <option value="allTime">All Time</option>
+            </select>
         </div>
         <div
           class="text-3xl font-bold mt-2"
-          :class="store.periodSummary.balance >= 0 ? 'text-success' : 'text-expense'"
+          :class="netCashFlow >= 0 ? 'text-success' : 'text-expense'"
         >
-          {{ formatCurrency(store.periodSummary.balance) }}
+          {{ formatCurrency(netCashFlow) }}
         </div>
         <div class="text-xs text-gray-400 mt-1">
-          Income - Expenses
+          Based on {{ getTimeRangeLabel(netCashFlowTimeRange) }}
         </div>
       </div>
     </div>

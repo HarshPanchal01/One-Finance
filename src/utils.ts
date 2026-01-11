@@ -138,3 +138,58 @@ export function verifyImportData(data: {
   }
 }
 
+export function getMetricsForRange(range: string, transactions: TransactionWithCategory[]) {
+  const now = new Date();
+  let startDate = new Date();
+  let daysDivisor = 1;
+
+  if (range === 'thisMonth') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      daysDivisor = now.getDate();
+  } else if (range === 'last3Months') {
+      startDate = new Date();
+      startDate.setDate(now.getDate() - 90);
+      daysDivisor = 90;
+  } else if (range === 'last6Months') {
+      startDate = new Date();
+      startDate.setDate(now.getDate() - 180);
+      daysDivisor = 180;
+  } else if (range === 'lastYear') {
+      startDate = new Date();
+      startDate.setDate(now.getDate() - 365);
+      daysDivisor = 365;
+  } else if (range === 'allTime') {
+      if (transactions.length === 0) return { income: 0, expense: 0, days: 1 };
+      const lastTx = transactions[transactions.length - 1];
+      const firstDateStr = lastTx.date;
+      startDate = new Date(firstDateStr);
+      const diffTime = Math.abs(now.getTime() - startDate.getTime());
+      daysDivisor = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      if (daysDivisor === 0) daysDivisor = 1;
+  }
+
+  startDate.setHours(0, 0, 0, 0);
+  now.setHours(23, 59, 59, 999);
+
+  const filtered = transactions.filter(t => {
+      const [y, m, d] = t.date.split('-').map(Number);
+      const tDate = new Date(y, m - 1, d);
+      return tDate >= startDate && tDate <= now;
+  });
+
+  const income = filtered.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  const expense = filtered.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+
+  return { income, expense, days: daysDivisor };
+}
+
+export function getTimeRangeLabel(range: string): string {
+    switch(range) {
+        case 'thisMonth': return 'elapsed days (Month)';
+        case 'last3Months': return 'last 3 months';
+        case 'last6Months': return 'last 6 months';
+        case 'lastYear': return 'last year';
+        case 'allTime': return 'all time history';
+        default: return '';
+    }
+}
