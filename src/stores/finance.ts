@@ -150,18 +150,6 @@ export const useFinanceStore = defineStore("finance", () => {
     ledgerMonths.value = ledgerMonths.value.filter((item) => item.year !== year);
   }
 
-
-  function fetchTransactionsForPeriodSync(year: number, month: number){
-    transactions.value = transactions.value.filter((value) => {
-      const strDate = value.date;
-      const dateList = strDate.split("-");
-      const dateYear = Number(dateList.at(0));
-      const dateMonth = Number(dateList.at(1));
-
-      return dateMonth === month && dateYear === year;
-    });
-  }
-
   function fetchPeriodSummarySync(){
     // periodSummary
     // incomeBreakdown
@@ -297,7 +285,7 @@ export const useFinanceStore = defineStore("finance", () => {
 
       // Fetch data for the selected period
       if (currentLedgerMonth.value) {
-        fetchTransactionsForPeriodSync(year, month);
+        await fetchTransactions(toRaw(currentLedgerMonth.value));
         fetchPeriodSummarySync();
       }
 

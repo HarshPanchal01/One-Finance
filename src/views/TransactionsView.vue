@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, toRaw } from "vue";
+import { ref, computed, onMounted, toRaw } from "vue";
 import { useFinanceStore } from "@/stores/finance";
 import { formatCurrency } from "@/utils";
 import TransactionItem from "@/components/TransactionItem.vue";
@@ -31,20 +31,15 @@ onMounted(() => {
   // If a period is already selected (from Sidebar), fetch for that period.
   // If not (Global Mode), fetch all.
   const ledgerMonth = toRaw(store.currentLedgerMonth) ?? undefined;
-  store.fetchTransactions(ledgerMonth);
-});
-
-// Reactively update when period changes
-watch(
-  () => store.currentLedgerMonth,
-  async (newLedgerMonth) => {
-    const plainMonth = newLedgerMonth
-      ? toRaw(newLedgerMonth)
-      : undefined;
-
-    await store.fetchTransactions(plainMonth);
+  
+  if (ledgerMonth) {
+    store.fetchTransactions(ledgerMonth);
+  } else if (store.selectedYear) {
+    store.fetchTransactions(null, store.selectedYear);
+  } else {
+    store.fetchTransactions();
   }
-);
+});
 
 // Filter state
 const searchQuery = ref("");
