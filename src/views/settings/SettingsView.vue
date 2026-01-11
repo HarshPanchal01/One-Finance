@@ -5,7 +5,7 @@ import ErrorModal from "@/components/ErrorModal.vue";
 import { useFinanceStore } from "@/stores/finance";
 import { Account, AccountType, Category, TransactionWithCategory } from "@/types";
 import NotificationModal from "@/components/NotificationModal.vue";
-import SettingsImportModal from "./SettingsImportModal.vue";
+import SettingsImportModal from "./components/SettingsImportModal.vue";
 
 const appVersion = "0.0.1";
 const dbPath = ref("");
@@ -539,7 +539,7 @@ async function importData() {
           <button
             class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             @click="exportData"
-            >
+          >
             <i class="pi pi-download mr-2" />
             
             Export Data
@@ -547,7 +547,7 @@ async function importData() {
           <button
             class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             @click="importData"
-            >
+          >
             <i class="pi pi-upload mr-2" />
             Import Data
           </button>
@@ -609,7 +609,5 @@ async function importData() {
   <ConfirmationModal ref="confirmModal" />
   <ErrorModal ref="errorModal" />
   <NotificationModal ref="notificationModal" />
-  <SettingsImportModal ref="actionModal"
-
-  />
+  <SettingsImportModal ref="actionModal" />
 </template>

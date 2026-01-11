@@ -590,9 +590,9 @@ export function getTransactions(
   }
 
   const transactions = result.filter((item) => {
-    let dateList = item.date.split("-");
-    let transactionMonth = Number(dateList[1]);
-    let transactionYear = Number(dateList[0]);
+    const dateList = item.date.split("-");
+    const transactionMonth = Number(dateList[1]);
+    const transactionYear = Number(dateList[0]);
 
     return transactionMonth === ledgerMonth.month && transactionYear === ledgerMonth.year;
   });
