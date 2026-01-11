@@ -689,6 +689,162 @@ export const useFinanceStore = defineStore("finance", () => {
   // SETTINGS ACTIONS
   // ==================================
 
+  async function importDatabaseData(data: {
+    accounts?: Account[],
+    transactions?: TransactionWithCategory[],
+    categories?: Category[],
+    accountTypes?: AccountType[],
+    ledgerYears?: number[]
+  }, skipDuplicates: boolean): Promise<boolean> {
+
+    const importAccounts = data.accounts!;
+    const importTransactions = data.transactions!;
+    const importCategories = data.categories!;
+    const importAccountTypes = data.accountTypes!;
+    const importLedgerYears = data.ledgerYears!;
+
+    const accountTypeIdMap = new Map<number, number>();
+    const categoryTypeIdMap = new Map<number, number>();
+    const accountIdMap = new Map<number, number>();
+
+    try {
+      for (const accountType of importAccountTypes){
+
+        // Check for existing account type
+        const existing = accountTypes.value.find((at) => at.type === accountType.type);
+        if (existing){
+          accountTypeIdMap.set(accountType.id, existing.id);
+          console.log(`Skipping inserting existing account type ${accountType.type}`);
+          continue;
+        }
+    
+        const result = await addAccountType(accountType);
+
+        console.log(`Inserting account type ${accountType.type} resulted in id ${result}`);
+    
+        if (result == null){
+          throw new Error("Resulting Id from inserting of account type is null");
+        }
+    
+        accountTypeIdMap.set(accountType.id, result);
+      }
+    
+      for (const account of importAccounts){
+
+        // Check for existing account
+        const existing = accounts.value.find((a) => a.accountName === account.accountName && a.institutionName === account.institutionName);
+        if (existing){
+          accountIdMap.set(account.id, existing.id);
+          console.log(`Skipping inserting existing account ${account.accountName}`);
+          continue;
+        }
+    
+        const accountTypeId = accountTypeIdMap.get(account.accountTypeId);
+    
+        if (accountTypeId == undefined){
+          throw new Error("Account type id mapping not found for account id: " + account.id);
+        }
+    
+        account.accountTypeId = accountTypeId;
+    
+        const result = await addAccount(account);
+
+        console.log(`Inserting account ${account.accountName} resulted in id ${result}`);
+    
+        if (result == null){
+          throw new Error("Resulting Id from inserting of account is null");
+        }
+    
+        accountIdMap.set(account.id, result);
+    
+      }
+    
+      for (const category of importCategories){
+
+        // Check for existing category
+        const existing = categories.value.find((c) => c.name === category.name);
+        if (existing){
+          categoryTypeIdMap.set(category.id, existing.id);
+          console.log(`Skipping inserting existing category ${category.name}`);
+          continue;
+        }
+    
+        const result = await addCategory(category.name, category.colorCode, category.icon);
+
+        console.log(`Inserting category ${category.name} resulted in id ${result.id}`);
+    
+        if (result == null){
+          throw new Error("Resulting Id from inserting of category is null");
+        }
+    
+        categoryTypeIdMap.set(category.id, result.id);
+    
+      }
+    
+      for (const ledgerYear of importLedgerYears){
+
+        // Check for existing ledger year
+        const existing = ledgerYears.value.find((ly) => ly === ledgerYear);
+        if (existing){
+          console.log(`Skipping inserting existing ledger year ${ledgerYear}`);
+          continue;
+        }
+    
+        await createYear(ledgerYear);
+
+        console.log(`Inserting ledger year ${ledgerYear} completed`);
+      }
+    
+      for (const transaction of importTransactions){
+
+          if (skipDuplicates){
+            // Check for existing transaction
+            const existing = transactions.value.find((t) => t.title === transaction.title && t.amount === transaction.amount && t.date === transaction.date);
+            if (existing){
+              console.log(`Skipping inserting existing transaction ${transaction.title}`);
+              continue;
+            }
+          }
+    
+          if (transaction.categoryId != undefined){
+            const mappedCategoryId = categoryTypeIdMap.get(transaction.categoryId);
+    
+            if (mappedCategoryId == undefined){
+              throw new Error("Category id mapping not found for transaction id: " + transaction.id);
+            }
+    
+            transaction.categoryId = mappedCategoryId;
+          }
+    
+          const mappedAccountId = accountIdMap.get(transaction.accountId);
+    
+          if (mappedAccountId == undefined){
+            throw new Error("Account id mapping not found for transaction id: " + transaction.id);
+          }
+    
+          transaction.accountId = mappedAccountId;
+    
+          await addTransaction({
+              title: transaction.title,
+              amount: transaction.amount,
+              date: transaction.date,
+              type: transaction.type,
+              categoryId: transaction.categoryId ?? undefined,
+              accountId: transaction.accountId!,
+              notes: transaction.notes || undefined,
+            }
+          );
+          console.log(`Inserting transaction ${transaction.title} completed`);
+      }
+    }
+   catch (error) {
+      console.log(error);
+      return false;
+    }
+
+    return true;
+  }
+
   async function deleteAllDataFromTables(){
     await window.electronAPI.deleteAllDataFromTables();
     accounts.value = [];
@@ -758,5 +914,6 @@ export const useFinanceStore = defineStore("finance", () => {
     addAccountType,
     editAccount,
     deleteAllDataFromTables,
+    importDatabaseData,
   };
 });

@@ -1,3 +1,56 @@
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const isOpen = ref(false);
+const title = ref('Confirm');
+const message = ref('Are you sure?');
+const cancelText = ref('Cancel');
+const confirmText = ref('Confirm');
+
+// Track selected action and duplicate option
+const selectedAction = ref<'replace' | 'append'>('replace');
+const skipDuplicates = ref(true);
+
+let resolveCallback: ((result: { action: 'replace' | 'append'; skipDuplicates: boolean } | null) => void) | null = null;
+
+function openConfirmation(options: {
+  title: string;
+  message: string;
+  cancelText?: string;
+  confirmText?: string;
+}): Promise<{ action: 'replace' | 'append'; skipDuplicates: boolean } | null> {
+  title.value = options.title;
+  message.value = options.message;
+  cancelText.value = options.cancelText ?? 'Cancel';
+  confirmText.value = options.confirmText ?? 'Confirm';
+  selectedAction.value = 'replace';
+  skipDuplicates.value = true;
+  isOpen.value = true;
+
+  return new Promise((resolve) => {
+    resolveCallback = resolve;
+  });
+}
+
+function handleConfirm() {
+  isOpen.value = false;
+  if (resolveCallback) {
+    resolveCallback({ action: selectedAction.value, skipDuplicates: skipDuplicates.value });
+    resolveCallback = null;
+  }
+}
+
+function handleCancel() {
+  isOpen.value = false;
+  if (resolveCallback) {
+    resolveCallback(null);
+    resolveCallback = null;
+  }
+}
+
+defineExpose({ openConfirmation });
+</script>
+
 <template>
   <div
     v-if="isOpen"
@@ -66,56 +119,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref } from 'vue';
-
-const isOpen = ref(false);
-const title = ref('Confirm');
-const message = ref('Are you sure?');
-const cancelText = ref('Cancel');
-const confirmText = ref('Confirm');
-
-// Track selected action and duplicate option
-const selectedAction = ref<'replace' | 'append'>('replace');
-const skipDuplicates = ref(true);
-
-let resolveCallback: ((result: { action: 'replace' | 'append'; skipDuplicates: boolean } | null) => void) | null = null;
-
-function openConfirmation(options: {
-  title: string;
-  message: string;
-  cancelText?: string;
-  confirmText?: string;
-}): Promise<{ action: 'replace' | 'append'; skipDuplicates: boolean } | null> {
-  title.value = options.title;
-  message.value = options.message;
-  cancelText.value = options.cancelText ?? 'Cancel';
-  confirmText.value = options.confirmText ?? 'Confirm';
-  selectedAction.value = 'replace';
-  skipDuplicates.value = true;
-  isOpen.value = true;
-
-  return new Promise((resolve) => {
-    resolveCallback = resolve;
-  });
-}
-
-function handleConfirm() {
-  isOpen.value = false;
-  if (resolveCallback) {
-    resolveCallback({ action: selectedAction.value, skipDuplicates: skipDuplicates.value });
-    resolveCallback = null;
-  }
-}
-
-function handleCancel() {
-  isOpen.value = false;
-  if (resolveCallback) {
-    resolveCallback(null);
-    resolveCallback = null;
-  }
-}
-
-defineExpose({ openConfirmation });
-</script>
