@@ -482,7 +482,7 @@ export function deleteCategory(id: number): boolean {
 
 export function searchTransactions(
   options: SearchOptions,
-  limit: number = 50
+  limit?: number
 ): TransactionWithCategory[] {
   const { text = "", categoryIds = [], accountIds = [], fromDate, toDate, minAmount, maxAmount, type } = options;
   const searchTerm = `%${text.trim()}%`;
@@ -553,8 +553,12 @@ export function searchTransactions(
     params.push(searchTerm, searchTerm, searchTerm);
   }
 
-  sql += " ORDER BY t.date DESC, t.id DESC LIMIT ?";
-  params.push(limit);
+  sql += " ORDER BY t.date DESC, t.id DESC";
+
+  if (limit) {
+    sql += " LIMIT ?";
+    params.push(limit);
+  }
 
   return db.prepare(sql).all(...params) as TransactionWithCategory[];
 }

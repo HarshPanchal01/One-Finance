@@ -50,7 +50,7 @@ import { computed, ref, watch } from 'vue';
 <template>
   <div
     ref="tileRef"
-    class="flex items-center justify-between p-4 border-b border-gray-200 transition-colors duration-500"
+    class="group flex items-center justify-between p-4 border-b border-gray-200 transition-colors duration-500"
     :class="[
       isHighlighted ? 'bg-primary-100 dark:bg-primary-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
     ]"
@@ -71,7 +71,7 @@ import { computed, ref, watch } from 'vue';
       </p>
     </div>
 
-    <div class="flex space-x-2">
+    <div class="hidden group-hover:flex space-x-2">
       <button
         class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 hover:text-primary-500 transition-colors"
         title="View Transactions"
