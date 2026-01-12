@@ -20,9 +20,8 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const defaultOptions = computed(() => {
-  const textColor = "#4b5563"; // gray-600
-  const textColorSecondary = "#9ca3af"; // gray-400
-  const surfaceBorder = "#e5e7eb"; // gray-200
+  const textColor = "#111827"; // gray-900 (Blackish)
+  const gridColor = "#e5e7eb"; // gray-200
 
   const base: ChartOptions = {
     maintainAspectRatio: false,
@@ -80,7 +79,7 @@ const defaultOptions = computed(() => {
     base.scales = {
       x: {
         ticks: {
-          color: textColorSecondary,
+          color: textColor,
           font: {
             weight: 500,
           },
@@ -88,10 +87,17 @@ const defaultOptions = computed(() => {
         grid: {
           display: false,
         },
+        title: {
+            display: false, // Default to false, components can override
+            color: textColor,
+            font: {
+                weight: 600
+            }
+        }
       },
       y: {
         ticks: {
-          color: textColorSecondary,
+          color: textColor,
           callback: function(value: string | number) {
               if (props.currencyFormat) {
                 const val = typeof value === 'string' ? parseFloat(value) : value;
@@ -101,8 +107,15 @@ const defaultOptions = computed(() => {
           }
         },
         grid: {
-          color: surfaceBorder,
+          color: gridColor,
         },
+        title: {
+            display: false, // Default to false
+            color: textColor,
+            font: {
+                weight: 600
+            }
+        }
       },
     };
   } else {

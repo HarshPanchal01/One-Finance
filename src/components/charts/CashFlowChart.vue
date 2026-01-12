@@ -30,12 +30,31 @@ const chartData = computed(() => {
     ],
   };
 });
+
+const chartOptions = {
+  plugins: {
+    legend: {
+      display: false, // Using custom legend in parent
+    }
+  },
+  scales: {
+    x: {
+      title: { display: true, text: 'Month(s)' }
+    },
+    y: {
+      title: { display: true, text: 'Amount ($)' }
+    }
+  }
+};
 </script>
 
 <template>
-  <AppChart
-    type="bar"
-    :data="chartData"
-    height="100%"
-  />
+  <div class="h-full w-full">
+    <AppChart
+      type="bar"
+      :data="chartData"
+      :options="chartOptions"
+      height="100%"
+    />
+  </div>
 </template>

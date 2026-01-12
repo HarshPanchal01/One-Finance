@@ -36,6 +36,7 @@ import {
   deleteAllDataFromTables,
   getRollingMonthlyTrends,
   getTotalMonthSpend,
+  getNetWorthTrend,
 } from "./db";
 import { Account, AccountType, CreateTransactionInput, LedgerMonth, SearchOptions } from "@/types";
 
@@ -180,6 +181,11 @@ export function registerIpcHandlers(): void {
   ipcMain.handle("db:getTotalMonthSpend", async (_event, year: number, month: number) => {
     return getTotalMonthSpend(year, month);
   });
+
+  ipcMain.handle("db:getNetWorthTrend", async () => {
+    return getNetWorthTrend();
+  });
+
 
 
 

@@ -811,5 +811,39 @@ export function getTotalMonthSpend(year: number, month: number): number {
     return result.total || 0;
 }
 
+export function getNetWorthTrend(): { month: number, year: number, balance: number }[] {
+    // 1. Get sum of all starting balances
+    const accounts = getAccounts();
+    const initialBalance = accounts.reduce((sum, acc) => sum + acc.startingBalance, 0);
+
+    // 2. Get monthly net changes (income - expense) for all time
+    const query = `
+        SELECT 
+            strftime('%Y', date) as yearStr,
+            strftime('%m', date) as monthStr,
+            SUM(CASE WHEN type = 'income' THEN amount ELSE -amount END) as netChange
+        FROM transactions 
+        GROUP BY yearStr, monthStr
+        ORDER BY yearStr ASC, monthStr ASC
+    `;
+    
+    const rows = db.prepare(query).all() as { yearStr: string, monthStr: string, netChange: number }[];
+    
+    // 3. Calculate cumulative balance
+    const trends: { month: number, year: number, balance: number }[] = [];
+    let runningBalance = initialBalance;
+    
+    for (const row of rows) {
+        runningBalance += row.netChange;
+        trends.push({
+            year: parseInt(row.yearStr),
+            month: parseInt(row.monthStr),
+            balance: runningBalance
+        });
+    }
+    
+    return trends;
+}
+
 // Export the database instance for advanced operations if needed
 export default db;

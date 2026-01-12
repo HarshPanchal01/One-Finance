@@ -52,6 +52,7 @@ export const useFinanceStore = defineStore("finance", () => {
   const incomeBreakdown = ref<CategoryBreakdown[]>([]);
   const expenseBreakdown = ref<CategoryBreakdown[]>([]);
   const monthlyTrends = ref<MonthlyTrend[]>([]);
+  const netWorthTrends = ref<{ month: number, year: number, balance: number }[]>([]);
 
   // Loading states - separate for initial load vs period changes
   const isLoading = ref(true); // Initial load
@@ -583,6 +584,15 @@ export const useFinanceStore = defineStore("finance", () => {
     }
   }
 
+  async function fetchNetWorthTrend() {
+    try {
+      netWorthTrends.value = await window.electronAPI.getNetWorthTrend();
+    } catch (e) {
+      console.error("[Store] Failed to fetch net worth trend:", e);
+      netWorthTrends.value = [];
+    }
+  }
+
   async function fetchPacingData(
     targetMonthStr: string, // "YYYY-MM"
     comparisonType: 'lastMonth' | 'avg3Months' | 'avg6Months'
@@ -842,6 +852,7 @@ export const useFinanceStore = defineStore("finance", () => {
     incomeBreakdown,
     expenseBreakdown,
     monthlyTrends,
+    netWorthTrends,
     isLoading,
     isChangingPeriod,
     error,
@@ -867,6 +878,7 @@ export const useFinanceStore = defineStore("finance", () => {
     fetchPeriodSummarySync,
     fetchMonthlyTrends,
     fetchRollingMonthlyTrends,
+    fetchNetWorthTrend,
     fetchPacingData,
     addTransaction,
     editTransaction,

@@ -36,9 +36,13 @@ const pacingData = computed(() => {
       {
         label: props.labelA,
         data: currentData,
-        borderColor: "#3b82f6", // Blue
-        backgroundColor: "rgba(59, 130, 246, 0.1)",
-        fill: true,
+        borderColor: "#0ea5e9", // Primary Brand Blue
+        // Dynamic area fill relative to comparison line (dataset 1)
+        fill: {
+          target: 1,
+          above: "rgba(239, 68, 68, 0.25)", // Red if current > comparison
+          below: "rgba(34, 197, 94, 0.25)", // Green if current < comparison
+        },
         tension: 0.4
       },
       {
@@ -60,7 +64,10 @@ const pacingOptions = computed(() => {
         },
         scales: {
             x: {
-                title: { display: true, text: 'Day of Month' }
+                title: { display: true, text: 'Day(s) of Month' }
+            },
+            y: {
+                title: { display: true, text: 'Cumulative Amount ($)' }
             }
         }
     };
