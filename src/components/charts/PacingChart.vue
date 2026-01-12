@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import AppChart from "@/components/AppChart.vue";
 import type { DailyTransactionSum } from "@/types";
 
@@ -57,8 +57,37 @@ const pacingData = computed(() => {
   };
 });
 
+const delayed = ref(false);
+
 const pacingOptions = computed(() => {
     return {
+        animation: {
+            onComplete: () => {
+                delayed.value = true;
+            },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            delay: (context: any) => {
+                let delay = 0;
+                if (context.type === 'data' && context.mode === 'default' && !delayed.value) {
+                    // Faster delay for daily points
+                    delay = context.dataIndex * 50 + context.datasetIndex * 100;
+                }
+                return delay;
+            },
+        },
+        animations: {
+            y: {
+                duration: 1000,
+                easing: "easeOutQuart" as const,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                from: (ctx: any) => {
+                    if (ctx.chart.scales.y) {
+                        return ctx.chart.scales.y.getPixelForValue(0);
+                    }
+                    return 0;
+                },
+            },
+        },
         plugins: {
             legend: { display: false }
         },

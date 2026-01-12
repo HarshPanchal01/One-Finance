@@ -145,22 +145,36 @@ const pacingLabelB = computed(() => {
         :class="savingsRate >= 20 ? 'border-income' : (savingsRate > 0 ? 'border-primary-500' : 'border-expense')"
       >
         <div class="flex justify-between items-start">
-            <div class="text-gray-900 text-sm font-medium">
-              Savings Rate
-            </div>
-            <!-- Dropdown -->
-            <select 
-                v-model="savingsTimeRange"
-                class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
-            >
-                <option value="thisMonth">This Month</option>
-                <option value="last3Months">Last 3 Months</option>
-                <option value="last6Months">Last 6 Months</option>
-                <option value="lastYear">Last Year</option>
-                <option value="thisYear">This Year</option>
-                <option value="ytd">YTD</option>
-                <option value="allTime">All Time</option>
-            </select>
+          <div class="text-gray-900 text-sm font-medium">
+            Savings Rate
+          </div>
+          <!-- Dropdown -->
+          <select 
+            v-model="savingsTimeRange"
+            class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
+          >
+            <option value="thisMonth">
+              This Month
+            </option>
+            <option value="last3Months">
+              Last 3 Months
+            </option>
+            <option value="last6Months">
+              Last 6 Months
+            </option>
+            <option value="lastYear">
+              Last Year
+            </option>
+            <option value="thisYear">
+              This Year
+            </option>
+            <option value="ytd">
+              YTD
+            </option>
+            <option value="allTime">
+              All Time
+            </option>
+          </select>
         </div>
         <div 
           class="text-3xl font-bold mt-2"
@@ -176,22 +190,36 @@ const pacingLabelB = computed(() => {
       <!-- Avg Daily Spend -->
       <div class="card p-4 flex flex-col justify-between border-l-4 border-primary-500">
         <div class="flex justify-between items-start">
-            <div class="text-gray-900 text-sm font-medium">
-              Average Daily Spend
-            </div>
-            <!-- Dropdown -->
-            <select 
-                v-model="avgSpendTimeRange"
-                class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
-            >
-                <option value="thisMonth">This Month</option>
-                <option value="last3Months">Last 3 Months</option>
-                <option value="last6Months">Last 6 Months</option>
-                <option value="lastYear">Last Year</option>
-                <option value="thisYear">This Year</option>
-                <option value="ytd">YTD</option>
-                <option value="allTime">All Time</option>
-            </select>
+          <div class="text-gray-900 text-sm font-medium">
+            Average Daily Spend
+          </div>
+          <!-- Dropdown -->
+          <select 
+            v-model="avgSpendTimeRange"
+            class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
+          >
+            <option value="thisMonth">
+              This Month
+            </option>
+            <option value="last3Months">
+              Last 3 Months
+            </option>
+            <option value="last6Months">
+              Last 6 Months
+            </option>
+            <option value="lastYear">
+              Last Year
+            </option>
+            <option value="thisYear">
+              This Year
+            </option>
+            <option value="ytd">
+              YTD
+            </option>
+            <option value="allTime">
+              All Time
+            </option>
+          </select>
         </div>
         <div class="text-3xl font-bold mt-2 text-gray-800 dark:text-white">
           {{ formatCurrency(avgDailySpend) }}
@@ -207,22 +235,36 @@ const pacingLabelB = computed(() => {
         :class="netCashFlow >= 0 ? 'border-income' : 'border-expense'"
       >
         <div class="flex justify-between items-start">
-            <div class="text-gray-900 text-sm font-medium">
-              Net Cash Flow
-            </div>
-            <!-- Dropdown -->
-            <select 
-                v-model="netCashFlowTimeRange"
-                class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
-            >
-                <option value="thisMonth">This Month</option>
-                <option value="last3Months">Last 3 Months</option>
-                <option value="last6Months">Last 6 Months</option>
-                <option value="lastYear">Last Year</option>
-                <option value="thisYear">This Year</option>
-                <option value="ytd">YTD</option>
-                <option value="allTime">All Time</option>
-            </select>
+          <div class="text-gray-900 text-sm font-medium">
+            Net Cash Flow
+          </div>
+          <!-- Dropdown -->
+          <select 
+            v-model="netCashFlowTimeRange"
+            class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
+          >
+            <option value="thisMonth">
+              This Month
+            </option>
+            <option value="last3Months">
+              Last 3 Months
+            </option>
+            <option value="last6Months">
+              Last 6 Months
+            </option>
+            <option value="lastYear">
+              Last Year
+            </option>
+            <option value="thisYear">
+              This Year
+            </option>
+            <option value="ytd">
+              YTD
+            </option>
+            <option value="allTime">
+              All Time
+            </option>
+          </select>
         </div>
         <div
           class="text-3xl font-bold mt-2"
@@ -241,33 +283,39 @@ const pacingLabelB = computed(() => {
       <!-- Cash Flow -->
       <div class="card p-4">
         <div class="relative flex items-center justify-center mb-4 min-h-[32px]">
-            <!-- Custom Legend (Left Aligned, offset from edge) -->
-            <div class="absolute left-12 flex flex-row gap-4">
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-1.5 rounded-sm bg-income shrink-0"></div>
-                <span class="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Income</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-1.5 rounded-sm bg-expense shrink-0"></div>
-                <span class="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Expenses</span>
-              </div>
+          <!-- Custom Legend (Left Aligned, offset from edge) -->
+          <div class="absolute left-12 flex flex-row gap-4">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-1.5 rounded-sm bg-income shrink-0" />
+              <span class="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Income</span>
             </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-1.5 rounded-sm bg-expense shrink-0" />
+              <span class="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Expenses</span>
+            </div>
+          </div>
 
-            <h3 class="font-semibold text-gray-700 dark:text-gray-200">
-              Cash Flow
-            </h3>
+          <h3 class="font-semibold text-gray-700 dark:text-gray-200">
+            Cash Flow
+          </h3>
             
-            <div class="absolute right-0">
-              <select 
-                  v-model="cashFlowOption"
-                  class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
+          <div class="absolute right-0">
+            <select 
+              v-model="cashFlowOption"
+              class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
+            >
+              <option value="YTD">
+                YTD
+              </option>
+              <option
+                v-for="year in store.ledgerYears"
+                :key="year"
+                :value="year.toString()"
               >
-                  <option value="YTD">YTD</option>
-                  <option v-for="year in store.ledgerYears" :key="year" :value="year.toString()">
-                      {{ year }}
-                  </option>
-              </select>
-            </div>
+                {{ year }}
+              </option>
+            </select>
+          </div>
         </div>
         <div class="h-64">
           <CashFlowChart />
@@ -277,47 +325,57 @@ const pacingLabelB = computed(() => {
       <!-- Spending Pacing -->
       <div class="card p-4">
         <div class="relative flex flex-col sm:flex-row items-center justify-center mb-4 min-h-[32px] gap-2">
-            <!-- Custom Legend (Left Aligned, offset from edge) -->
-            <div class="absolute left-12 flex flex-row gap-4">
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-1.5 rounded-sm bg-primary-500 shrink-0"></div>
-                <span class="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Current</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-1.5 rounded-sm border border-gray-400 border-dashed shrink-0 bg-gray-100 dark:bg-gray-700"></div>
-                <span class="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Comparison</span>
-              </div>
+          <!-- Custom Legend (Left Aligned, offset from edge) -->
+          <div class="absolute left-12 flex flex-row gap-4">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-1.5 rounded-sm bg-primary-500 shrink-0" />
+              <span class="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Current</span>
             </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-1.5 rounded-sm border border-gray-400 border-dashed shrink-0 bg-gray-100 dark:bg-gray-700" />
+              <span class="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Comparison</span>
+            </div>
+          </div>
 
-            <h3 class="font-semibold text-gray-700 dark:text-gray-200">
-              Spending Pacing
-            </h3>
+          <h3 class="font-semibold text-gray-700 dark:text-gray-200">
+            Spending Pacing
+          </h3>
             
-            <!-- Custom Legend / Dropdowns -->
-            <div class="sm:absolute sm:right-0 flex flex-wrap items-center gap-4">
-                <!-- Dropdown A -->
-                <div class="flex items-center">
-                    <select 
-                        v-model="pacingRangeA"
-                        class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-primary-500 font-semibold px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
-                    >
-                        <option v-for="m in availableMonths" :key="m.value" :value="m.value">
-                            {{ m.label }}
-                        </option>
-                    </select>
-                </div>
-                <!-- Dropdown B -->
-                <div class="flex items-center">
-                    <select 
-                        v-model="pacingRangeB"
-                        class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
-                    >
-                        <option value="lastMonth">Last Month</option>
-                        <option value="avg3Months">3 Month Avg</option>
-                        <option value="avg6Months">6 Month Avg</option>
-                    </select>
-                </div>
+          <!-- Custom Legend / Dropdowns -->
+          <div class="sm:absolute sm:right-0 flex flex-wrap items-center gap-4">
+            <!-- Dropdown A -->
+            <div class="flex items-center">
+              <select 
+                v-model="pacingRangeA"
+                class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-primary-500 font-semibold px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
+              >
+                <option
+                  v-for="m in availableMonths"
+                  :key="m.value"
+                  :value="m.value"
+                >
+                  {{ m.label }}
+                </option>
+              </select>
             </div>
+            <!-- Dropdown B -->
+            <div class="flex items-center">
+              <select 
+                v-model="pacingRangeB"
+                class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
+              >
+                <option value="lastMonth">
+                  Last Month
+                </option>
+                <option value="avg3Months">
+                  3 Month Avg
+                </option>
+                <option value="avg6Months">
+                  6 Month Avg
+                </option>
+              </select>
+            </div>
+          </div>
         </div>
         <div class="h-64">
           <PacingChart 
@@ -345,13 +403,27 @@ const pacingLabelB = computed(() => {
               v-model="expenseBreakdownTimeRange"
               class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
             >
-              <option value="thisMonth">This Month</option>
-              <option value="last3Months">Last 3 Months</option>
-              <option value="last6Months">Last 6 Months</option>
-              <option value="lastYear">Last Year</option>
-              <option value="thisYear">This Year</option>
-              <option value="ytd">YTD</option>
-              <option value="allTime">All Time</option>
+              <option value="thisMonth">
+                This Month
+              </option>
+              <option value="last3Months">
+                Last 3 Months
+              </option>
+              <option value="last6Months">
+                Last 6 Months
+              </option>
+              <option value="lastYear">
+                Last Year
+              </option>
+              <option value="thisYear">
+                This Year
+              </option>
+              <option value="ytd">
+                YTD
+              </option>
+              <option value="allTime">
+                All Time
+              </option>
             </select>
           </div>
         </div>
@@ -371,8 +443,14 @@ const pacingLabelB = computed(() => {
               v-model="netWorthOption"
               class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
             >
-              <option value="YTD">YTD</option>
-              <option v-for="year in store.ledgerYears" :key="year" :value="year.toString()">
+              <option value="YTD">
+                YTD
+              </option>
+              <option
+                v-for="year in store.ledgerYears"
+                :key="year"
+                :value="year.toString()"
+              >
                 {{ year }}
               </option>
             </select>

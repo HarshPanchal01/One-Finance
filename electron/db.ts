@@ -775,7 +775,7 @@ export function getRollingMonthlyTrends(): MonthlyTrend[] {
   const rows = db.prepare(query).all(startStr, endStr) as { yearStr: string, monthStr: string, totalIncome: number, totalExpenses: number }[];
   
   const trends: MonthlyTrend[] = [];
-  let ptr = new Date(startDate);
+  const ptr = new Date(startDate);
   
   // Loop 13 times
   for (let i = 0; i < 13; i++) {

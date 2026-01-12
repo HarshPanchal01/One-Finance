@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useFinanceStore } from "@/stores/finance";
 import AppChart from "@/components/AppChart.vue";
 import { getMonthName } from "@/utils";
@@ -49,19 +49,50 @@ const chartData = computed(() => {
   };
 });
 
-const chartOptions = {
-  plugins: {
-    legend: { display: false },
-  },
-  scales: {
-    x: {
-      title: { display: true, text: 'Month(s)' }
+// Helper for delay state
+const delayed = ref(false);
+
+const chartOptions = computed(() => {
+  return {
+    animation: {
+      onComplete: () => {
+        delayed.value = true;
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delay: (context: any) => {
+        let delay = 0;
+        if (context.type === 'data' && context.mode === 'default' && !delayed.value) {
+          delay = context.dataIndex * 150 + context.datasetIndex * 100;
+        }
+        return delay;
+      },
     },
-    y: {
-      title: { display: true, text: 'Total Balance ($)' }
+    animations: {
+      y: {
+        duration: 1000,
+        easing: "easeOutQuart" as const,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        from: (ctx: any) => {
+          if (ctx.chart.scales.y) {
+            return ctx.chart.scales.y.getPixelForValue(0);
+          }
+          return 0;
+        },
+      },
+    },
+    plugins: {
+      legend: { display: false },
+    },
+    scales: {
+      x: {
+        title: { display: true, text: 'Month(s)' }
+      },
+      y: {
+        title: { display: true, text: 'Total Balance ($)' }
+      }
     }
-  }
-};
+  };
+});
 </script>
 
 <template>

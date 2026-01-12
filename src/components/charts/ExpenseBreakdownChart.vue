@@ -92,7 +92,7 @@ const categoryOptions = {
           <i
             :class="['pi', cat.categoryIcon]"
             :style="{ color: cat.categoryColor, fontSize: '12px' }"
-          ></i>
+          />
         </div>
         <div class="flex flex-col min-w-0">
           <span class="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate">

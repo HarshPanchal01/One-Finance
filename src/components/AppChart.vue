@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import Chart from "primevue/chart";
-import type { TooltipItem, ChartOptions } from "chart.js";
+import type { TooltipItem, ChartOptions, ChartData } from "chart.js";
 
 interface Props {
   type: "bar" | "line" | "doughnut" | "pie" | "polarArea" | "radar";
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  options?: any;
+  data: ChartData;
+  options?: ChartOptions;
   height?: string;
   currencyFormat?: boolean;
 }
@@ -34,8 +32,7 @@ const defaultOptions = computed(() => {
       tooltip: {
         mode: props.type === 'doughnut' || props.type === 'pie' ? 'nearest' : 'index',
         intersect: false,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        callbacks: {} as any,
+        callbacks: {},
       },
     },
     scales: {},
@@ -48,8 +45,7 @@ const defaultOptions = computed(() => {
 
   // Add Currency Formatting to Tooltips
   if (props.currencyFormat) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    base.plugins!.tooltip!.callbacks!.label = function(context: TooltipItem<any>) {
+    base.plugins!.tooltip!.callbacks!.label = function(context: TooltipItem<"bar" | "line" | "doughnut" | "pie" | "polarArea" | "radar">) {
         let label = context.dataset.label || '';
         if (label) {
             label += ': ';
@@ -64,7 +60,7 @@ const defaultOptions = computed(() => {
             
             // Calculate percentage
             const meta = context.chart.getDatasetMeta(context.datasetIndex);
-            const total = (meta as any).total;
+            const total = (meta as unknown as { total: number }).total;
             if (total > 0) {
                 const percentage = ((val / total) * 100).toFixed(1);
                 label += ` (${percentage}%)`;
@@ -120,8 +116,7 @@ const defaultOptions = computed(() => {
     };
   } else {
       // Clear scales for radial charts to avoid errors if merged improperly
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (base as any).scales;
+      delete base.scales;
   }
 
   return base;
@@ -129,14 +124,6 @@ const defaultOptions = computed(() => {
 
 // Deep merge options (simple version)
 const chartOptions = computed(() => {
-  // We can use a library like lodash.merge if needed, but for now simple spread with specific overrides is likely enough
-  // or just rely on chart.js ability to handle some missing defaults.
-  // BUT, we want to allow the user to override specific defaults (e.g. scales).
-  // A simple spread isn't deep merge.
-  // For now, let's just return the defaults merged with props.options loosely.
-  // If props.options has 'scales', it replaces our default scales entirely with this approach.
-  // To do it better without a library:
-  
   const merged = { ...defaultOptions.value, ...props.options };
   
   // Merge plugins deep-ish

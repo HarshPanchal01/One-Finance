@@ -32,6 +32,21 @@ const chartData = computed(() => {
 });
 
 const chartOptions = {
+  animation: {
+    duration: 1000,
+    easing: "easeOutQuart" as const,
+  },
+  animations: {
+    y: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      from: (ctx: any) => {
+        if (ctx.chart.scales.y) {
+          return ctx.chart.scales.y.getPixelForValue(0);
+        }
+        return 0;
+      },
+    },
+  },
   plugins: {
     legend: {
       display: false, // Using custom legend in parent
