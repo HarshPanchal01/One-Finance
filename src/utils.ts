@@ -136,48 +136,64 @@ export function verifyImportData(data: {
 export function getMetricsForRange(range: string, transactions: TransactionWithCategory[]) {
   const now = new Date();
   let startDate = new Date();
+  let endDate = new Date();
   let daysDivisor = 1;
 
   if (range === 'thisMonth') {
     startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    daysDivisor = now.getDate();
+    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    daysDivisor = endDate.getDate();
   } else if (range === 'last3Months') {
-    startDate = new Date();
-    startDate.setDate(now.getDate() - 90);
-    daysDivisor = 90;
+    startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+    endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    daysDivisor = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   } else if (range === 'last6Months') {
-    startDate = new Date();
-    startDate.setDate(now.getDate() - 180);
-    daysDivisor = 180;
+    startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+    endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    daysDivisor = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   } else if (range === 'lastYear') {
-    startDate = new Date();
-    startDate.setDate(now.getDate() - 365);
-    daysDivisor = 365;
+    startDate = new Date(now.getFullYear() - 1, 0, 1);
+    endDate = new Date(now.getFullYear() - 1, 11, 31);
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    daysDivisor = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   } else if (range === 'thisYear') {
     startDate = new Date(now.getFullYear(), 0, 1);
-    const diffTime = Math.abs(now.getTime() - startDate.getTime());
-    daysDivisor = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    endDate = new Date(now.getFullYear(), 11, 31);
+    // Calculate days in current year
+    const startNextYear = new Date(now.getFullYear() + 1, 0, 1);
+    daysDivisor = Math.ceil((startNextYear.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   } else if (range === 'ytd') {
     // User defined YTD as Rolling Year (e.g. Feb 2026 to Feb 2025)
     startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
     daysDivisor = 365;
   } else if (range === 'allTime') {
     if (transactions.length === 0) return { income: 0, expense: 0, days: 1 };
-    const lastTx = transactions[transactions.length - 1];
-    const firstDateStr = lastTx.date;
-    startDate = new Date(firstDateStr);
-    const diffTime = Math.abs(now.getTime() - startDate.getTime());
+    // Assuming transactions are sorted descending (newest first)
+    const oldestTx = transactions[transactions.length - 1];
+    const newestTx = transactions[0];
+    
+    startDate = new Date(oldestTx.date);
+    const potentialEndDate = new Date(newestTx.date);
+    
+    // If newest transaction is in the future compared to now, extend endDate
+    if (potentialEndDate > now) {
+      endDate = potentialEndDate;
+    }
+    
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
     daysDivisor = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     if (daysDivisor === 0) daysDivisor = 1;
   }
 
   startDate.setHours(0, 0, 0, 0);
-  now.setHours(23, 59, 59, 999);
+  endDate.setHours(23, 59, 59, 999);
 
   const filtered = transactions.filter(t => {
     const [y, m, d] = t.date.split('-').map(Number);
     const tDate = new Date(y, m - 1, d);
-    return tDate >= startDate && tDate <= now;
+    return tDate >= startDate && tDate <= endDate;
   });
 
   const income = filtered.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
@@ -189,36 +205,45 @@ export function getMetricsForRange(range: string, transactions: TransactionWithC
 export function getExpenseBreakdownForRange(range: string, transactions: TransactionWithCategory[]): CategoryBreakdown[] {
   const now = new Date();
   let startDate = new Date();
+  let endDate = new Date();
 
   if (range === 'thisMonth') {
     startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   } else if (range === 'last3Months') {
-    startDate = new Date();
-    startDate.setDate(now.getDate() - 90);
+    startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+    endDate = new Date(now.getFullYear(), now.getMonth(), 0);
   } else if (range === 'last6Months') {
-    startDate = new Date();
-    startDate.setDate(now.getDate() - 180);
+    startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+    endDate = new Date(now.getFullYear(), now.getMonth(), 0);
   } else if (range === 'lastYear') {
-    startDate = new Date();
-    startDate.setDate(now.getDate() - 365);
+    startDate = new Date(now.getFullYear() - 1, 0, 1);
+    endDate = new Date(now.getFullYear() - 1, 11, 31);
   } else if (range === 'thisYear') {
     startDate = new Date(now.getFullYear(), 0, 1);
+    endDate = new Date(now.getFullYear(), 11, 31);
   } else if (range === 'ytd') {
     startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
   } else if (range === 'allTime') {
     if (transactions.length === 0) return [];
-    const lastTx = transactions[transactions.length - 1];
-    startDate = new Date(lastTx.date);
+    const oldestTx = transactions[transactions.length - 1];
+    startDate = new Date(oldestTx.date);
+    
+    const newestTx = transactions[0];
+    const potentialEndDate = new Date(newestTx.date);
+    if (potentialEndDate > now) {
+      endDate = potentialEndDate;
+    }
   }
 
   startDate.setHours(0, 0, 0, 0);
-  now.setHours(23, 59, 59, 999);
+  endDate.setHours(23, 59, 59, 999);
 
   const filtered = transactions.filter(t => {
     if (t.type !== 'expense') return false;
     const [y, m, d] = t.date.split('-').map(Number);
     const tDate = new Date(y, m - 1, d);
-    return tDate >= startDate && tDate <= now;
+    return tDate >= startDate && tDate <= endDate;
   });
 
   const breakdownMap = new Map<number, CategoryBreakdown>();
@@ -246,11 +271,11 @@ export function getExpenseBreakdownForRange(range: string, transactions: Transac
 
 export function getTimeRangeLabel(range: string): string {
   switch (range) {
-    case 'thisMonth': return 'elapsed days (Month)';
+    case 'thisMonth': return 'this month';
     case 'last3Months': return 'last 3 months';
     case 'last6Months': return 'last 6 months';
     case 'lastYear': return 'last year';
-    case 'thisYear': return 'this year';
+    case 'thisYear': return 'this year (projected)';
     case 'ytd': return 'last 12 months (YTD)';
     case 'allTime': return 'all time history';
     default: return '';
