@@ -45,16 +45,21 @@ const categoryData = computed(() => {
     datasets: [
       {
         data: topCategories.value.map((c) => c.total),
-        backgroundColor: topCategories.value.map((c) => c.categoryColor),
-        borderWidth: 0,
+        backgroundColor: topCategories.value.map((c) => c.categoryColor + '99'), // ~60% opacity
+        hoverBackgroundColor: topCategories.value.map((c) => c.categoryColor), // 100% opacity on hover
+        borderColor: "#0ea5e999",
+        hoverBorderColor: "#0ea5e9",
+        borderWidth: 2,
         hoverOffset: 4,
-        cutout: "80%",
       },
     ],
   };
 });
 
 const categoryOptions = {
+  layout: {
+    padding: 10
+  },
   plugins: {
     legend: { display: false },
   },
@@ -63,18 +68,22 @@ const categoryOptions = {
 
 <template>
   <div class="flex flex-row h-full w-full items-center gap-6">
-    <!-- Chart with Total in Center -->
-    <div class="relative w-60 h-60 shrink-0">
-      <AppChart
-        type="doughnut"
-        :data="categoryData"
-        :options="categoryOptions"
-        height="100%"
-      />
-      <!-- Center Text -->
-      <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pt-1">
-        <span class="text-[10px] text-gray-500 dark:text-gray-400 font-medium uppercase leading-tight">Total</span>
-        <span class="text-lg font-bold text-gray-800 dark:text-white">{{ formatCurrency(totalExpenses) }}</span>
+    <!-- Left Column: Total Text + Chart -->
+    <div class="flex flex-col items-center justify-center gap-0 shrink-0">
+      <!-- Total Text (Above Chart) -->
+      <div class="flex flex-col items-center justify-center mb-1">
+        <span class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase leading-tight">Total</span>
+        <span class="text-2xl font-bold text-gray-800 dark:text-white">{{ formatCurrency(totalExpenses) }}</span>
+      </div>
+
+      <!-- Chart -->
+      <div class="w-60 h-60">
+        <AppChart
+          type="pie"
+          :data="categoryData"
+          :options="categoryOptions"
+          height="100%"
+        />
       </div>
     </div>
 

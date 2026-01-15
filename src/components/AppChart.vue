@@ -9,12 +9,14 @@ interface Props {
   options?: ChartOptions;
   height?: string;
   currencyFormat?: boolean;
+  plugins?: any[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
   options: () => ({}),
   height: "300px",
   currencyFormat: true,
+  plugins: () => [],
 });
 
 const defaultOptions = computed(() => {
@@ -31,15 +33,15 @@ const defaultOptions = computed(() => {
       },
       tooltip: {
         mode: props.type === 'doughnut' || props.type === 'pie' ? 'nearest' : 'index',
-        intersect: false,
+        intersect: props.type === 'doughnut' || props.type === 'pie' ? true : false,
         callbacks: {},
       },
     },
     scales: {},
     interaction: {
         mode: 'nearest',
-        axis: 'x',
-        intersect: false
+        axis: props.type === 'doughnut' || props.type === 'pie' ? undefined : 'x',
+        intersect: props.type === 'doughnut' || props.type === 'pie' ? true : false
     }
   };
 
@@ -146,6 +148,7 @@ const chartOptions = computed(() => {
       :type="type"
       :data="data"
       :options="chartOptions"
+      :plugins="plugins"
       class="h-full"
     />
   </div>
