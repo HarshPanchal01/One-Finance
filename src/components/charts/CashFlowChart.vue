@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useFinanceStore } from "@/stores/finance";
-import { getMonthName } from "@/utils";
+import { getMonthName, toIsoDateString } from "@/utils";
 import AppChart from "@/components/AppChart.vue";
 
 const store = useFinanceStore();
@@ -78,6 +78,35 @@ const chartOptions = computed(() => ({
     },
     y: {
       title: { display: true, text: 'Amount ($)' }
+    }
+  },
+  onHover: (_event: any, chartElement: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (_event as any).native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+  },
+  onClick: (_event: any, elements: any[]) => {
+    if (elements && elements.length > 0) {
+      const element = elements[0];
+      const index = element.index;
+      const datasetIndex = element.datasetIndex;
+      
+      const t = trends.value[index];
+      const type = datasetIndex === 0 ? 'income' : 'expense';
+      
+      if (t) {
+        // Construct date range for the specific month
+        const startDate = new Date(t.year, t.month - 1, 1);
+        const endDate = new Date(t.year, t.month, 0); // Last day of month
+        
+        const filter = {
+          fromDate: toIsoDateString(startDate),
+          toDate: toIsoDateString(endDate),
+          type: type as 'income' | 'expense'
+        };
+
+        store.setTransactionFilter(filter);
+        store.searchTransactions(filter);
+      }
     }
   }
 }));

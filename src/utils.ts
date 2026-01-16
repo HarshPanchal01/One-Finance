@@ -174,14 +174,14 @@ export function getDateRange(range: string, transactions?: TransactionWithCatego
     startDate = new Date(0); 
     
     if (transactions && transactions.length > 0) {
-      // Assuming transactions are sorted descending (newest first) but just in case we sort or find min/max
-      // Since sorting might be expensive, and they come from store usually sorted... 
-      // Let's assume store.transactions is sorted descending by date.
       const newestTx = transactions[0];
       const oldestTx = transactions[transactions.length - 1];
       
-      startDate = new Date(oldestTx.date);
-      const potentialEndDate = new Date(newestTx.date);
+      const [oy, om, od] = oldestTx.date.split('-').map(Number);
+      startDate = new Date(oy, om - 1, od);
+
+      const [ny, nm, nd] = newestTx.date.split('-').map(Number);
+      const potentialEndDate = new Date(ny, nm - 1, nd);
       
       if (potentialEndDate > now) {
         endDate = potentialEndDate;
@@ -197,61 +197,12 @@ export function getDateRange(range: string, transactions?: TransactionWithCatego
 }
 
 export function getMetricsForRange(range: string, transactions: TransactionWithCategory[]) {
-  const now = new Date();
-  let startDate = new Date();
-  let endDate = new Date();
-  let daysDivisor = 1;
-
-  if (range === 'thisMonth') {
-    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    daysDivisor = endDate.getDate();
-  } else if (range === 'last3Months') {
-    startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-    endDate = new Date(now.getFullYear(), now.getMonth(), 0);
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    daysDivisor = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  } else if (range === 'last6Months') {
-    startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
-    endDate = new Date(now.getFullYear(), now.getMonth(), 0);
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    daysDivisor = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  } else if (range === 'lastYear') {
-    startDate = new Date(now.getFullYear() - 1, 0, 1);
-    endDate = new Date(now.getFullYear() - 1, 11, 31);
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    daysDivisor = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  } else if (range === 'thisYear') {
-    startDate = new Date(now.getFullYear(), 0, 1);
-    endDate = new Date(now.getFullYear(), 11, 31);
-    // Calculate days in current year
-    const startNextYear = new Date(now.getFullYear() + 1, 0, 1);
-    daysDivisor = Math.ceil((startNextYear.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-  } else if (range === 'ytd') {
-    // User defined YTD as Rolling Year (e.g. Feb 2026 to Feb 2025)
-    startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-    daysDivisor = 365;
-  } else if (range === 'allTime') {
-    if (transactions.length === 0) return { income: 0, expense: 0, days: 1 };
-    // Assuming transactions are sorted descending (newest first)
-    const oldestTx = transactions[transactions.length - 1];
-    const newestTx = transactions[0];
-    
-    startDate = new Date(oldestTx.date);
-    const potentialEndDate = new Date(newestTx.date);
-    
-    // If newest transaction is in the future compared to now, extend endDate
-    if (potentialEndDate > now) {
-      endDate = potentialEndDate;
-    }
-    
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    daysDivisor = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    if (daysDivisor === 0) daysDivisor = 1;
-  }
-
-  startDate.setHours(0, 0, 0, 0);
-  endDate.setHours(23, 59, 59, 999);
+  const { startDate, endDate } = getDateRange(range, transactions);
+  
+  // Calculate total days in range for average calculation
+  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+  let daysDivisor = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  if (daysDivisor === 0) daysDivisor = 1;
 
   const filtered = transactions.filter(t => {
     const [y, m, d] = t.date.split('-').map(Number);
@@ -266,41 +217,7 @@ export function getMetricsForRange(range: string, transactions: TransactionWithC
 }
 
 export function getExpenseBreakdownForRange(range: string, transactions: TransactionWithCategory[]): CategoryBreakdown[] {
-  const now = new Date();
-  let startDate = new Date();
-  let endDate = new Date();
-
-  if (range === 'thisMonth') {
-    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  } else if (range === 'last3Months') {
-    startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-    endDate = new Date(now.getFullYear(), now.getMonth(), 0);
-  } else if (range === 'last6Months') {
-    startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
-    endDate = new Date(now.getFullYear(), now.getMonth(), 0);
-  } else if (range === 'lastYear') {
-    startDate = new Date(now.getFullYear() - 1, 0, 1);
-    endDate = new Date(now.getFullYear() - 1, 11, 31);
-  } else if (range === 'thisYear') {
-    startDate = new Date(now.getFullYear(), 0, 1);
-    endDate = new Date(now.getFullYear(), 11, 31);
-  } else if (range === 'ytd') {
-    startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-  } else if (range === 'allTime') {
-    if (transactions.length === 0) return [];
-    const oldestTx = transactions[transactions.length - 1];
-    startDate = new Date(oldestTx.date);
-    
-    const newestTx = transactions[0];
-    const potentialEndDate = new Date(newestTx.date);
-    if (potentialEndDate > now) {
-      endDate = potentialEndDate;
-    }
-  }
-
-  startDate.setHours(0, 0, 0, 0);
-  endDate.setHours(23, 59, 59, 999);
+  const { startDate, endDate } = getDateRange(range, transactions);
 
   const filtered = transactions.filter(t => {
     if (t.type !== 'expense') return false;
