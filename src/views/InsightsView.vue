@@ -68,11 +68,25 @@ const netCashFlow = computed(() => {
 });
 
 // ===============================================
+// AVAILABLE YEARS (Ledger + Transaction History)
+// ===============================================
+
+const availableYears = computed(() => {
+    const years = new Set(store.ledgerYears);
+    
+    store.netWorthTrends.forEach(trend => {
+        years.add(trend.year);
+    });
+    
+    return Array.from(years).sort((a, b) => b - a);
+});
+
+// ===============================================
 // PACING CHART
 // ===============================================
 
 // Generate last 12 months for Dropdown A
-const availableMonths = computed(() => {
+const pacingAvailableMonths = computed(() => {
     const months = [];
     const date = new Date();
     // Start from current month
@@ -91,13 +105,13 @@ const availableMonths = computed(() => {
     return months;
 });
 
-const pacingRangeA = ref<string>(availableMonths.value[0]?.value || ''); // Default to current month
+const pacingRangeA = ref<string>(pacingAvailableMonths.value[0]?.value || ''); // Default to current month
 const pacingRangeB = ref<'lastMonth' | 'avg3Months' | 'avg6Months'>('lastMonth');
 const pacingSeriesA = ref<DailyTransactionSum[]>([]);
 const pacingSeriesB = ref<DailyTransactionSum[]>([]);
 
-// Initialize default if availableMonths changes (e.g. on mount if empty initially, though computed runs immediately)
-watch(availableMonths, (newVal) => {
+// Initialize default if pacingAvailableMonths changes (e.g. on mount if empty initially, though computed runs immediately)
+watch(pacingAvailableMonths, (newVal) => {
     if (newVal.length > 0 && !pacingRangeA.value) {
         pacingRangeA.value = newVal[0].value;
     }
@@ -115,7 +129,7 @@ watch([pacingRangeA, pacingRangeB], refreshPacing);
 
 // Helper for label display
 const pacingLabelA = computed(() => {
-    const m = availableMonths.value.find(m => m.value === pacingRangeA.value);
+    const m = pacingAvailableMonths.value.find(m => m.value === pacingRangeA.value);
     return m ? m.label : 'Selected Month';
 });
 
@@ -308,7 +322,7 @@ const pacingLabelB = computed(() => {
                 YTD
               </option>
               <option
-                v-for="year in store.ledgerYears"
+                v-for="year in availableYears"
                 :key="year"
                 :value="year.toString()"
               >
@@ -350,7 +364,7 @@ const pacingLabelB = computed(() => {
                 class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-primary-500 font-semibold px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
               >
                 <option
-                  v-for="m in availableMonths"
+                  v-for="m in pacingAvailableMonths"
                   :key="m.value"
                   :value="m.value"
                 >
@@ -447,7 +461,7 @@ const pacingLabelB = computed(() => {
                 YTD
               </option>
               <option
-                v-for="year in store.ledgerYears"
+                v-for="year in availableYears"
                 :key="year"
                 :value="year.toString()"
               >
