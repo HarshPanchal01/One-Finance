@@ -3,7 +3,7 @@ import { ref, onMounted } from "vue";
 import ConfirmationModal from "@/components/ConfirmationModal.vue";
 import ErrorModal from "@/components/ErrorModal.vue";
 import NotificationModal from "@/components/NotificationModal.vue";
-import SettingsImportModal from "@/components/SettingsImportModal.vue";
+import SettingsImportModal from "./components/SettingsImportModal.vue";
 import { useDataManagement } from "@/composables/useDataManagement";
 
 const appVersion = "0.0.1";

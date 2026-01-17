@@ -1,5 +1,10 @@
 import { Account, AccountType, Category, TransactionWithCategory, CategoryBreakdown } from "@/types";
 
+export interface DateRange {
+  startDate: Date;
+  endDate: Date;
+}
+
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -140,7 +145,7 @@ export function verifyImportData(data: {
   }
 }
 
-export function getDateRange(range: string, transactions?: TransactionWithCategory[], customRange?: { startDate: Date, endDate: Date }): { startDate: Date, endDate: Date } {
+export function getDateRange(range: string, transactions?: TransactionWithCategory[], customRange?: DateRange): DateRange {
   const now = new Date();
   let startDate = new Date();
   let endDate = new Date();
@@ -200,7 +205,7 @@ export function getDateRange(range: string, transactions?: TransactionWithCatego
   return { startDate, endDate };
 }
 
-export function getMetricsForRange(range: string, transactions: TransactionWithCategory[], customRange?: { startDate: Date, endDate: Date }) {
+export function getMetricsForRange(range: string, transactions: TransactionWithCategory[], customRange?: DateRange) {
   const { startDate, endDate } = getDateRange(range, transactions, customRange);
   
   // Calculate total days in range for average calculation
@@ -220,7 +225,7 @@ export function getMetricsForRange(range: string, transactions: TransactionWithC
   return { income, expense, days: daysDivisor };
 }
 
-export function getExpenseBreakdownForRange(range: string, transactions: TransactionWithCategory[], customRange?: { startDate: Date, endDate: Date }): CategoryBreakdown[] {
+export function getExpenseBreakdownForRange(range: string, transactions: TransactionWithCategory[], customRange?: DateRange): CategoryBreakdown[] {
   const { startDate, endDate } = getDateRange(range, transactions, customRange);
 
   const filtered = transactions.filter(t => {
@@ -261,7 +266,7 @@ function formatCustomDate(date: Date): string {
   return `${m}-${d}-${y}`;
 }
 
-export function getTimeRangeLabel(range: string, customRange?: { startDate: Date, endDate: Date }): string {
+export function getTimeRangeLabel(range: string, customRange?: DateRange): string {
   switch (range) {
     case 'thisMonth': return 'this month';
     case 'last3Months': return 'last 3 months';
@@ -278,4 +283,38 @@ export function getTimeRangeLabel(range: string, customRange?: { startDate: Date
       return 'custom range';
     default: return '';
   }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getCustomRangeObj(dateRange: any): DateRange | undefined {
+  if (Array.isArray(dateRange) && dateRange[0] && dateRange[1]) {
+    return { startDate: dateRange[0], endDate: dateRange[1] };
+  }
+  return undefined;
+}
+
+export function calculateSavingsRate(income: number, expense: number): number {
+  if (income === 0) return 0;
+  return ((income - expense) / income) * 100;
+}
+
+export function calculateAvgDailySpend(expense: number, days: number): number {
+  if (days === 0) return 0;
+  return expense / days;
+}
+
+export function calculateNetCashFlow(income: number, expense: number): number {
+  return income - expense;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getPacingLabel(date: any, defaultLabel: string): string {
+  if (!date) return defaultLabel;
+  return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+}
+
+export function getMonthStr(date: Date): string {
+    const y = date.getFullYear();
+    const m = date.getMonth() + 1;
+    return `${y}-${String(m).padStart(2, '0')}`;
 }

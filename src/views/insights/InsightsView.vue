@@ -1,15 +1,25 @@
 <script setup lang="ts">
 import { computed, onMounted, watch, ref } from "vue";
 import { useFinanceStore } from "@/stores/finance";
-import { formatCurrency, getMetricsForRange, getTimeRangeLabel, getExpenseBreakdownForRange } from "@/utils";
+import { 
+  formatCurrency, 
+  getMetricsForRange, 
+  getTimeRangeLabel, 
+  getExpenseBreakdownForRange, 
+  getCustomRangeObj, 
+  calculateSavingsRate, 
+  calculateAvgDailySpend, 
+  calculateNetCashFlow, 
+  getPacingLabel,
+  getMonthStr } from "@/utils";
 import type { DailyTransactionSum } from "@/types";
-import CashFlowChart from "@/components/charts/CashFlowChart.vue";
-import PacingChart from "@/components/charts/PacingChart.vue";
-import ExpenseBreakdownChart from "@/components/charts/ExpenseBreakdownChart.vue";
-import NetWorthChart from "@/components/charts/NetWorthChart.vue";
+import CashFlowChart from "@/views/insights/components/charts/CashFlowChart.vue";
+import PacingChart from "@/views/insights/components/charts/PacingChart.vue";
+import ExpenseBreakdownChart from "@/views/insights/components/charts/ExpenseBreakdownChart.vue";
+import NetWorthChart from "@/views/insights/components/charts/NetWorthChart.vue";
 import DatePicker from "primevue/datepicker";
-import InsightMetricCard from "@/components/InsightMetricCard.vue";
-import InsightTimeRangeSelector from "@/components/InsightTimeRangeSelector.vue";
+import InsightMetricCard from "@/views/insights/components/InsightMetricCard.vue";
+import InsightTimeRangeSelector from "@/views/insights/components/InsightTimeRangeSelector.vue";
 
 const store = useFinanceStore();
 
@@ -58,38 +68,24 @@ watch(cashFlowOption, async (newVal) => {
     }
 });
 
-// Helper to convert array [Date, Date] to object { startDate, endDate }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getCustomRangeObj(dateRange: any) {
-  if (Array.isArray(dateRange) && dateRange[0] && dateRange[1]) {
-    return { startDate: dateRange[0], endDate: dateRange[1] };
-  }
-  return undefined;
-}
-
 const savingsData = computed(() => getMetricsForRange(savingsTimeRange.value, store.transactions, getCustomRangeObj(savingsCustomDate.value)));
 const avgSpendData = computed(() => getMetricsForRange(avgSpendTimeRange.value, store.transactions, getCustomRangeObj(avgSpendCustomDate.value)));
 const netCashFlowData = computed(() => getMetricsForRange(netCashFlowTimeRange.value, store.transactions, getCustomRangeObj(netCashFlowCustomDate.value)));
 const expenseBreakdownData = computed(() => getExpenseBreakdownForRange(expenseBreakdownTimeRange.value, store.transactions, getCustomRangeObj(expenseBreakdownCustomDate.value)));
 
-// Pass the custom range object to the chart component if needed
-const expenseBreakdownCustomRangeObj = computed(() => getCustomRangeObj(expenseBreakdownCustomDate.value));
-
 const savingsRate = computed(() => {
   const { income, expense } = savingsData.value;
-  if (income === 0) return 0;
-  return ((income - expense) / income) * 100;
+  return calculateSavingsRate(income, expense);
 });
 
 const avgDailySpend = computed(() => {
   const { expense, days } = avgSpendData.value;
-  if (days === 0) return 0;
-  return expense / days;
+  return calculateAvgDailySpend(expense, days);
 });
 
 const netCashFlow = computed(() => {
     const { income, expense } = netCashFlowData.value;
-    return income - expense;
+    return calculateNetCashFlow(income, expense);
 });
 
 // ===============================================
@@ -127,13 +123,6 @@ const pacingDateB = ref<any>(new Date(new Date().setMonth(new Date().getMonth() 
 const pacingSeriesA = ref<DailyTransactionSum[]>([]);
 const pacingSeriesB = ref<DailyTransactionSum[]>([]);
 
-// Convert Date to YYYY-MM
-function getMonthStr(date: Date): string {
-    const y = date.getFullYear();
-    const m = date.getMonth() + 1;
-    return `${y}-${String(m).padStart(2, '0')}`;
-}
-
 async function refreshPacing() {
     if (!pacingDateA.value) return;
 
@@ -156,15 +145,8 @@ async function refreshPacing() {
 watch([pacingDateA, pacingDateB], refreshPacing);
 
 // Helper for label display
-const pacingLabelA = computed(() => {
-    if (!pacingDateA.value) return 'Selected Month';
-    return pacingDateA.value.toLocaleString('default', { month: 'long', year: 'numeric' });
-});
-
-const pacingLabelB = computed(() => {
-    if (!pacingDateB.value) return 'Select Month';
-    return pacingDateB.value.toLocaleString('default', { month: 'long', year: 'numeric' });
-});
+const pacingLabelA = computed(() => getPacingLabel(pacingDateA.value, 'Selected Month'));
+const pacingLabelB = computed(() => getPacingLabel(pacingDateB.value, 'Select Month'));
 </script>
 
 <template>
@@ -185,6 +167,9 @@ const pacingLabelB = computed(() => {
         :value="savingsRate.toFixed(1) + '%'"
         :value-class="savingsRate >= 20 ? 'text-income' : 'text-expense'"
         :border-class="savingsRate >= 20 ? 'border-income' : (savingsRate > 0 ? 'border-primary-500' : 'border-expense')"
+        formula-title="Savings Rate Formula"
+        formula="(Income - Expenses) / Income"
+        :calculation="`(${formatCurrency(savingsData.income)} - ${formatCurrency(savingsData.expense)}) / ${formatCurrency(savingsData.income)}`"
       >
         <template #footer>
           <div class="text-xs text-gray-400 mt-1 flex gap-2">
@@ -203,6 +188,9 @@ const pacingLabelB = computed(() => {
         :value="formatCurrency(avgDailySpend)"
         value-class="text-gray-800 dark:text-white"
         border-class="border-primary-500"
+        formula-title="Average Daily Spend"
+        formula="Total Expenses / Days in Period"
+        :calculation="`${formatCurrency(avgSpendData.expense)} / ${avgSpendData.days} days`"
       >
         <template #footer>
           <div class="text-xs text-gray-400 mt-1">
@@ -219,6 +207,9 @@ const pacingLabelB = computed(() => {
         :value="formatCurrency(netCashFlow)"
         :value-class="netCashFlow >= 0 ? 'text-income' : 'text-expense'"
         :border-class="netCashFlow >= 0 ? 'border-income' : 'border-expense'"
+        formula-title="Net Cash Flow"
+        formula="Total Income - Total Expenses"
+        :calculation="`${formatCurrency(netCashFlowData.income)} - ${formatCurrency(netCashFlowData.expense)}`"
       >
         <template #footer>
           <div class="text-xs text-gray-400 mt-1">
@@ -372,7 +363,7 @@ const pacingLabelB = computed(() => {
           <ExpenseBreakdownChart 
             :breakdown="expenseBreakdownData" 
             :time-range="expenseBreakdownTimeRange"
-            :custom-range="expenseBreakdownCustomRangeObj"
+            :custom-range="getCustomRangeObj(expenseBreakdownCustomDate)"
           />
         </div>
         <div class="text-xs text-gray-400 mt-1 pl-1">

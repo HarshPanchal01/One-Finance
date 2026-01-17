@@ -52,19 +52,11 @@ function onSelectChange(event: Event) {
   const newVal = (event.target as any).value;
   localValue.value = newVal;
 
-  if (newVal === 'custom') {
-    // If we have a custom range already, use it. Otherwise start empty.
-    if (props.customRange) {
-        tempCustomDate.value = props.customRange;
-    } else {
-        tempCustomDate.value = null;
-    }
+  if (newVal === 'custom' || newVal === 'custom_edit') {
+    // For custom, only use existing range if available, otherwise start empty.
+    // For custom_edit, always use existing range.
+    tempCustomDate.value = (newVal === 'custom_edit' || props.customRange) ? props.customRange : null;
     nextTick(() => showDatePicker());
-    // Do NOT emit update:modelValue yet
-  } else if (newVal === 'custom_edit') {
-    tempCustomDate.value = props.customRange;
-    nextTick(() => showDatePicker());
-    // Do NOT emit yet
   } else {
     emit("update:modelValue", newVal);
   }
