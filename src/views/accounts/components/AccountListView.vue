@@ -1,3 +1,21 @@
+<script setup lang="ts">
+//import { Ref } from 'vue';
+import { Account } from '@/types';
+import AccountListTile from './AccountListTile.vue';
+
+const emit = defineEmits<{
+    (e: 'edit', account: Account): void,
+    (e: 'delete', account: Account): void,
+    (e: 'view-transactions', account: Account): void
+}>();
+
+defineProps<{
+    accountArray: Array<Account>,
+    highlightedId?: number | null
+}>();
+
+</script>
+
 <template>
   <div class="divide-y">
     <AccountListTile
@@ -16,21 +34,3 @@
     />
   </div>
 </template>
-
-<script setup lang="ts">
-//import { Ref } from 'vue';
-import { Account } from '@/types';
-import AccountListTile from './AccountListTile.vue';
-
-const emit = defineEmits<{
-    (e: 'edit', account: Account): void,
-    (e: 'delete', account: Account): void,
-    (e: 'view-transactions', account: Account): void
-}>();
-
-defineProps<{
-    accountArray: Array<Account>,
-    highlightedId?: number | null
-}>();
-
-</script>

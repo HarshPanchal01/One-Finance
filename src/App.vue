@@ -13,10 +13,12 @@ import TransactionsView from "@/views/TransactionsView.vue";
 import CategoriesView from "@/views/CategoriesView.vue";
 import SettingsView from "@/views/settings/SettingsView.vue";
 import AccountsView from "@/views/accounts/AccountsView.vue";
+import InsightsView from "@/views/insights/InsightsView.vue";
+  
 const store = useFinanceStore();
 
 // Current view
-type ViewName = "dashboard" | "transactions" | "categories" | "settings" | "accounts";
+type ViewName = "dashboard" | "transactions" | "categories" | "settings" | "accounts" | "insights";
 const currentView = ref<ViewName>("dashboard");
 
 // Cross-view state
@@ -88,13 +90,16 @@ function handleKeydown(e: KeyboardEvent) {
         e.preventDefault();
         currentView.value = "dashboard";
         break;
-      case "t":
-        e.preventDefault();
-        currentView.value = "transactions";
-        break;
-      case "c":
-        if (e.shiftKey) {
-          e.preventDefault();
+            case "t":
+              e.preventDefault();
+              currentView.value = "transactions";
+              break;
+            case "i":
+              e.preventDefault();
+              currentView.value = "insights";
+              break;
+            case "c":
+              if (e.shiftKey) {          e.preventDefault();
           currentView.value = "categories";
         }
         break;
@@ -172,6 +177,7 @@ function handleKeydown(e: KeyboardEvent) {
             :highlight-account-id="activeAccountId"
             @request-view-transactions="handleRequestViewTransactions"
           />
+          <InsightsView v-else-if="currentView === 'insights'" />
         </template>
       </main>
     </div>

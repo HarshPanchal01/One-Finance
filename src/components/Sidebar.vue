@@ -17,6 +17,11 @@ const store = useFinanceStore();
 // Track expanded years in the tree
 const expandedYears = ref<Set<number>>(new Set());
 
+// Context Menu State
+const contextMenuVisible = ref(false);
+const contextMenuPosition = ref({ x: 0, y: 0 });
+const contextMenuYear = ref<number | null>(null);
+
 // Modal states
 const showAddYearModal = ref(false);
 const newYear = ref(new Date().getFullYear());
@@ -27,6 +32,7 @@ const yearToDelete = ref<number | null>(null);
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: "pi-home" },
   { id: "transactions", label: "Transactions", icon: "pi-list" },
+  { id: "insights", label: "Insights", icon: "pi-chart-line" },
   { id: "accounts", label: "Accounts", icon: "pi-wallet" },
   { id: "categories", label: "Categories", icon: "pi-tags" },
   { id: "settings", label: "Settings", icon: "pi-cog" },
@@ -121,6 +127,37 @@ async function handleDeleteYearConfirm(deleteTransactions: boolean) {
   showDeleteYearModal.value = false;
   yearToDelete.value = null;
 }
+
+// Open Context Menu
+function openContextMenu(event: MouseEvent, year: number) {
+  event.preventDefault();
+  contextMenuYear.value = year;
+  contextMenuPosition.value = { x: event.clientX, y: event.clientY };
+  contextMenuVisible.value = true;
+
+  // Close menu when clicking elsewhere
+  const closeMenu = () => {
+    contextMenuVisible.value = false;
+    document.removeEventListener("click", closeMenu);
+  };
+  // Use timeout to avoid immediate close
+  window.setTimeout(() => document.addEventListener("click", closeMenu), 0);
+}
+
+async function viewYearDetails() {
+  if (contextMenuYear.value) {
+    await store.selectYear(contextMenuYear.value);
+    emit("navigate", "transactions");
+  }
+  contextMenuVisible.value = false;
+}
+
+async function requestDeleteYear() {
+  contextMenuVisible.value = false;
+  if (contextMenuYear.value) {
+    await deleteYear(contextMenuYear.value);
+  }
+}
 </script>
 
 <template>
@@ -145,6 +182,12 @@ async function handleDeleteYearConfirm(deleteTransactions: boolean) {
           >
             {{ getMonthName(store.currentLedgerMonth.month) }}
             {{ store.currentLedgerMonth.year }}
+          </p>
+          <p
+            v-else-if="store.selectedYear"
+            class="text-xs text-gray-500 dark:text-gray-400"
+          >
+            {{ store.selectedYear }} (All Months)
           </p>
           <p
             v-else
@@ -229,6 +272,7 @@ async function handleDeleteYearConfirm(deleteTransactions: boolean) {
             <button
               class="flex-1 flex items-center px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
               @click="toggleYear(yearNode.year)"
+              @contextmenu="openContextMenu($event, yearNode.year)"
             >
               <i
                 :class="[
@@ -243,17 +287,6 @@ async function handleDeleteYearConfirm(deleteTransactions: boolean) {
                 yearNode.year
               }}</span>
             </button>
-
-            <!-- Year Actions -->
-            <div class="hidden group-hover:flex items-center pr-2">
-              <button
-                class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-400 hover:text-expense"
-                title="Delete year"
-                @click.stop="deleteYear(yearNode.year)"
-              >
-                <i class="pi pi-trash text-xs" />
-              </button>
-            </div>
           </div>
 
           <!-- Month Children -->
@@ -323,6 +356,32 @@ async function handleDeleteYearConfirm(deleteTransactions: boolean) {
         </div>
       </div>
     </Teleport>
+    <Teleport to="body">
+      <div
+        v-if="contextMenuVisible"
+        class="fixed z-50 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-[160px]"
+        :style="{
+          left: `${contextMenuPosition.x}px`,
+          top: `${contextMenuPosition.y}px`,
+        }"
+      >
+        <button
+          class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+          @click="viewYearDetails"
+        >
+          <i class="pi pi-search mr-2" />
+          View Year Details
+        </button>
+        <button
+          class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center"
+          @click="requestDeleteYear"
+        >
+          <i class="pi pi-trash mr-2" />
+          Delete Year
+        </button>
+      </div>
+    </Teleport>
+
     <YearDeleteModal
       :visible="showDeleteYearModal"
       :year="yearToDelete"
