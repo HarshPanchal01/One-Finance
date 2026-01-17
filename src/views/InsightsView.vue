@@ -409,6 +409,8 @@ const pacingLabelB = computed(() => {
             :series-b="pacingSeriesB" 
             :label-a="pacingLabelA" 
             :label-b="pacingLabelB"
+            :date-a="pacingDateA"
+            :date-b="pacingDateB"
           />
         </div>
       </div>

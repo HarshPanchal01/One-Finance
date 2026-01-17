@@ -2,13 +2,21 @@
 import { computed, ref } from "vue";
 import AppChart from "@/components/AppChart.vue";
 import type { DailyTransactionSum } from "@/types";
+import { useFinanceStore } from "@/stores/finance";
+import { toIsoDateString } from "@/utils";
 
 const props = defineProps<{
   seriesA: DailyTransactionSum[];
   seriesB: DailyTransactionSum[];
   labelA: string;
   labelB: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dateA?: any; // Date object for Series A
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dateB?: any; // Date object for Series B
 }>();
+
+const store = useFinanceStore();
 
 const pacingData = computed(() => {
   const current = props.seriesA;
@@ -48,7 +56,9 @@ const pacingData = computed(() => {
           above: "rgba(239, 68, 68, 0.25)", // Red if current > comparison
           below: "rgba(34, 197, 94, 0.25)", // Green if current < comparison
         },
-        tension: 0.4
+        tension: 0.4,
+        pointHoverRadius: 6,
+        pointHitRadius: 10
       },
       {
         label: props.labelB,
@@ -57,7 +67,9 @@ const pacingData = computed(() => {
         borderDash: isFlatLine ? [5, 5] : [], // Dashed for average, solid for actual history
         borderWidth: isFlatLine ? 2 : 2,
         pointRadius: isFlatLine ? 0 : 3, // Hide points for average
-        tension: isFlatLine ? 0 : 0.4 // Smooth curve for history, straight for average
+        tension: isFlatLine ? 0 : 0.4, // Smooth curve for history, straight for average
+        pointHoverRadius: isFlatLine ? 0 : 6,
+        pointHitRadius: 10
       }
     ]
   };
@@ -94,8 +106,35 @@ const pacingOptions = computed(() => {
                 },
             },
         },
+        interaction: {
+            mode: 'nearest' as const,
+            axis: 'x' as const,
+            intersect: true
+        },
         plugins: {
-            legend: { display: false }
+            legend: { display: false },
+            tooltip: {
+                displayColors: true,
+                padding: 10,
+                cornerRadius: 8,
+                titleFont: { size: 13, weight: 'bold' as const },
+                bodyFont: { size: 12 },
+                callbacks: {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    title: (items: any[]) => {
+                        if (items.length === 0) return '';
+                        const day = items[0].label;
+                        const datasetIndex = items[0].datasetIndex;
+                        // Determine which month context to show
+                        const dateContext = datasetIndex === 0 ? props.dateA : props.dateB;
+                        
+                        if (dateContext && dateContext instanceof Date) {
+                            return `${dateContext.toLocaleString('default', { month: 'short' })} ${day}, ${dateContext.getFullYear()}`;
+                        }
+                        return `Day ${day}`;
+                    }
+                }
+            }
         },
         scales: {
             x: {
@@ -103,6 +142,41 @@ const pacingOptions = computed(() => {
             },
             y: {
                 title: { display: true, text: 'Cumulative Amount ($)' }
+            }
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onHover: (_event: any, chartElement: any) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (_event as any).native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onClick: (_event: any, elements: any[]) => {
+            if (elements && elements.length > 0) {
+                const element = elements[0];
+                const index = element.index; // 0-based index (Day 1 = 0)
+                const datasetIndex = element.datasetIndex;
+                
+                const targetDate = datasetIndex === 0 ? props.dateA : props.dateB;
+                
+                if (targetDate && targetDate instanceof Date) {
+                    const day = index + 1;
+                    const year = targetDate.getFullYear();
+                    const month = targetDate.getMonth(); // 0-based
+                    
+                    // Filter: From start of month to clicked day
+                    const fromDate = toIsoDateString(new Date(year, month, 1));
+                    const toDate = toIsoDateString(new Date(year, month, day));
+                    
+                    const filter = {
+                        fromDate,
+                        toDate,
+                        type: 'expense' as const
+                    };
+
+                    store.setTransactionFilter(filter);
+                    store.searchTransactions(filter); // Trigger search
+                    // Store watcher will handle navigation to Transactions view
+                }
             }
         }
     };
