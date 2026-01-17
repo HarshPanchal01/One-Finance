@@ -140,7 +140,7 @@ export function verifyImportData(data: {
   }
 }
 
-export function getDateRange(range: string, transactions?: TransactionWithCategory[]): { startDate: Date, endDate: Date } {
+export function getDateRange(range: string, transactions?: TransactionWithCategory[], customRange?: { startDate: Date, endDate: Date }): { startDate: Date, endDate: Date } {
   const now = new Date();
   let startDate = new Date();
   let endDate = new Date();
@@ -148,7 +148,11 @@ export function getDateRange(range: string, transactions?: TransactionWithCatego
   // Default end date is end of today unless specified otherwise
   endDate.setHours(23, 59, 59, 999);
 
-  if (range === 'thisMonth') {
+  if ((range === 'custom' || range === 'custom_edit') && customRange) {
+    startDate = new Date(customRange.startDate);
+    endDate = new Date(customRange.endDate);
+    endDate.setHours(23, 59, 59, 999);
+  } else if (range === 'thisMonth') {
     startDate = new Date(now.getFullYear(), now.getMonth(), 1);
     endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     endDate.setHours(23, 59, 59, 999);
@@ -196,8 +200,8 @@ export function getDateRange(range: string, transactions?: TransactionWithCatego
   return { startDate, endDate };
 }
 
-export function getMetricsForRange(range: string, transactions: TransactionWithCategory[]) {
-  const { startDate, endDate } = getDateRange(range, transactions);
+export function getMetricsForRange(range: string, transactions: TransactionWithCategory[], customRange?: { startDate: Date, endDate: Date }) {
+  const { startDate, endDate } = getDateRange(range, transactions, customRange);
   
   // Calculate total days in range for average calculation
   const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
@@ -216,8 +220,8 @@ export function getMetricsForRange(range: string, transactions: TransactionWithC
   return { income, expense, days: daysDivisor };
 }
 
-export function getExpenseBreakdownForRange(range: string, transactions: TransactionWithCategory[]): CategoryBreakdown[] {
-  const { startDate, endDate } = getDateRange(range, transactions);
+export function getExpenseBreakdownForRange(range: string, transactions: TransactionWithCategory[], customRange?: { startDate: Date, endDate: Date }): CategoryBreakdown[] {
+  const { startDate, endDate } = getDateRange(range, transactions, customRange);
 
   const filtered = transactions.filter(t => {
     if (t.type !== 'expense') return false;
@@ -249,7 +253,15 @@ export function getExpenseBreakdownForRange(range: string, transactions: Transac
   return Array.from(breakdownMap.values()).sort((a, b) => b.total - a.total);
 }
 
-export function getTimeRangeLabel(range: string): string {
+function formatCustomDate(date: Date): string {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const y = date.getFullYear();
+  const m = months[date.getMonth()];
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${m}-${d}-${y}`;
+}
+
+export function getTimeRangeLabel(range: string, customRange?: { startDate: Date, endDate: Date }): string {
   switch (range) {
     case 'thisMonth': return 'this month';
     case 'last3Months': return 'last 3 months';
@@ -258,6 +270,12 @@ export function getTimeRangeLabel(range: string): string {
     case 'thisYear': return 'this year (projected)';
     case 'ytd': return 'last 12 months (YTD)';
     case 'allTime': return 'all time history';
+    case 'custom':
+    case 'custom_edit': 
+      if (customRange) {
+        return `custom range (${formatCustomDate(customRange.startDate)} to ${formatCustomDate(customRange.endDate)})`;
+      }
+      return 'custom range';
     default: return '';
   }
 }

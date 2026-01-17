@@ -444,13 +444,14 @@ onUnmounted(() => {
             v-model="dateRange" 
             selection-mode="range" 
             :manual-input="false"
+            :hide-on-range-selection="true"
             date-format="yy-mm-dd"
-            class="absolute opacity-0 w-1 h-1 overflow-hidden"
+            class="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
             @hide="handleSearch"
           />
            
           <button
-            class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center gap-1"
+            class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center gap-1 relative z-10"
             title="Filter by Date"
             @click="toggleDatePicker"
           >

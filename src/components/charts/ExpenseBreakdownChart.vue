@@ -8,6 +8,7 @@ import { formatCurrency, getDateRange, toIsoDateString } from "@/utils";
 const props = defineProps<{
   breakdown: CategoryBreakdown[];
   timeRange: string;
+  customRange?: { startDate: Date, endDate: Date };
 }>();
 
 const store = useFinanceStore();
@@ -77,7 +78,7 @@ const categoryOptions = computed(() => ({
       const category = topCategories.value[index];
       
       if (category.categoryId) {
-        const { startDate, endDate } = getDateRange(props.timeRange, store.transactions);
+        const { startDate, endDate } = getDateRange(props.timeRange, store.transactions, props.customRange);
         
         const filter = {
           categoryIds: [category.categoryId],

@@ -8,6 +8,8 @@ import PacingChart from "@/components/charts/PacingChart.vue";
 import ExpenseBreakdownChart from "@/components/charts/ExpenseBreakdownChart.vue";
 import NetWorthChart from "@/components/charts/NetWorthChart.vue";
 import DatePicker from "primevue/datepicker";
+import InsightMetricCard from "@/components/InsightMetricCard.vue";
+import InsightTimeRangeSelector from "@/components/InsightTimeRangeSelector.vue";
 
 const store = useFinanceStore();
 
@@ -37,6 +39,16 @@ const expenseBreakdownTimeRange = ref<string>('thisMonth');
 const cashFlowOption = ref<string>('YTD');
 const netWorthOption = ref<string>('YTD');
 
+// Custom Date Ranges (Actual used for metrics)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const savingsCustomDate = ref<any>(null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const avgSpendCustomDate = ref<any>(null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const netCashFlowCustomDate = ref<any>(null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const expenseBreakdownCustomDate = ref<any>(null);
+
 // Watcher for cashFlowOption
 watch(cashFlowOption, async (newVal) => {
     if (newVal === 'YTD') {
@@ -46,10 +58,22 @@ watch(cashFlowOption, async (newVal) => {
     }
 });
 
-const savingsData = computed(() => getMetricsForRange(savingsTimeRange.value, store.transactions));
-const avgSpendData = computed(() => getMetricsForRange(avgSpendTimeRange.value, store.transactions));
-const netCashFlowData = computed(() => getMetricsForRange(netCashFlowTimeRange.value, store.transactions));
-const expenseBreakdownData = computed(() => getExpenseBreakdownForRange(expenseBreakdownTimeRange.value, store.transactions));
+// Helper to convert array [Date, Date] to object { startDate, endDate }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getCustomRangeObj(dateRange: any) {
+  if (Array.isArray(dateRange) && dateRange[0] && dateRange[1]) {
+    return { startDate: dateRange[0], endDate: dateRange[1] };
+  }
+  return undefined;
+}
+
+const savingsData = computed(() => getMetricsForRange(savingsTimeRange.value, store.transactions, getCustomRangeObj(savingsCustomDate.value)));
+const avgSpendData = computed(() => getMetricsForRange(avgSpendTimeRange.value, store.transactions, getCustomRangeObj(avgSpendCustomDate.value)));
+const netCashFlowData = computed(() => getMetricsForRange(netCashFlowTimeRange.value, store.transactions, getCustomRangeObj(netCashFlowCustomDate.value)));
+const expenseBreakdownData = computed(() => getExpenseBreakdownForRange(expenseBreakdownTimeRange.value, store.transactions, getCustomRangeObj(expenseBreakdownCustomDate.value)));
+
+// Pass the custom range object to the chart component if needed
+const expenseBreakdownCustomRangeObj = computed(() => getCustomRangeObj(expenseBreakdownCustomDate.value));
 
 const savingsRate = computed(() => {
   const { income, expense } = savingsData.value;
@@ -154,142 +178,54 @@ const pacingLabelB = computed(() => {
     <!-- Metrics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <!-- Savings Rate -->
-      <div
-        class="card p-4 flex flex-col justify-between border-l-4"
-        :class="savingsRate >= 20 ? 'border-income' : (savingsRate > 0 ? 'border-primary-500' : 'border-expense')"
+      <InsightMetricCard
+        title="Savings Rate"
+        :value="savingsRate.toFixed(1) + '%'"
+        v-model:modelValue="savingsTimeRange"
+        v-model:customRange="savingsCustomDate"
+        :value-class="savingsRate >= 20 ? 'text-income' : 'text-expense'"
+        :border-class="savingsRate >= 20 ? 'border-income' : (savingsRate > 0 ? 'border-primary-500' : 'border-expense')"
       >
-        <div class="flex justify-between items-start">
-          <div class="text-gray-900 text-sm font-medium">
-            Savings Rate
+        <template #footer>
+          <div class="text-xs text-gray-400 mt-1 flex gap-2">
+            <span>Based on {{ getTimeRangeLabel(savingsTimeRange, getCustomRangeObj(savingsCustomDate)) }}</span>
+            <span>•</span>
+            <span>Target: >20%</span>
           </div>
-          <!-- Dropdown -->
-          <select 
-            v-model="savingsTimeRange"
-            class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
-          >
-            <option value="thisMonth">
-              This Month
-            </option>
-            <option value="last3Months">
-              Last 3 Months
-            </option>
-            <option value="last6Months">
-              Last 6 Months
-            </option>
-            <option value="lastYear">
-              Last Year
-            </option>
-            <option value="thisYear">
-              This Year
-            </option>
-            <option value="ytd">
-              YTD
-            </option>
-            <option value="allTime">
-              All Time
-            </option>
-          </select>
-        </div>
-        <div 
-          class="text-3xl font-bold mt-2"
-          :class="savingsRate >= 20 ? 'text-income' : 'text-expense'"
-        >
-          {{ savingsRate.toFixed(1) }}%
-        </div>
-        <div class="text-xs text-gray-400 mt-1">
-          Target: >20%
-        </div>
-      </div>
+        </template>
+      </InsightMetricCard>
 
       <!-- Avg Daily Spend -->
-      <div class="card p-4 flex flex-col justify-between border-l-4 border-primary-500">
-        <div class="flex justify-between items-start">
-          <div class="text-gray-900 text-sm font-medium">
-            Average Daily Spend
+      <InsightMetricCard
+        title="Average Daily Spend"
+        :value="formatCurrency(avgDailySpend)"
+        v-model:modelValue="avgSpendTimeRange"
+        v-model:customRange="avgSpendCustomDate"
+        value-class="text-gray-800 dark:text-white"
+        border-class="border-primary-500"
+      >
+        <template #footer>
+          <div class="text-xs text-gray-400 mt-1">
+            Based on {{ getTimeRangeLabel(avgSpendTimeRange, getCustomRangeObj(avgSpendCustomDate)) }}
           </div>
-          <!-- Dropdown -->
-          <select 
-            v-model="avgSpendTimeRange"
-            class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
-          >
-            <option value="thisMonth">
-              This Month
-            </option>
-            <option value="last3Months">
-              Last 3 Months
-            </option>
-            <option value="last6Months">
-              Last 6 Months
-            </option>
-            <option value="lastYear">
-              Last Year
-            </option>
-            <option value="thisYear">
-              This Year
-            </option>
-            <option value="ytd">
-              YTD
-            </option>
-            <option value="allTime">
-              All Time
-            </option>
-          </select>
-        </div>
-        <div class="text-3xl font-bold mt-2 text-gray-800 dark:text-white">
-          {{ formatCurrency(avgDailySpend) }}
-        </div>
-        <div class="text-xs text-gray-400 mt-1">
-          Based on {{ getTimeRangeLabel(avgSpendTimeRange) }}
-        </div>
-      </div>
+        </template>
+      </InsightMetricCard>
 
       <!-- Net Cash Flow -->
-      <div
-        class="card p-4 flex flex-col justify-between border-l-4"
-        :class="netCashFlow >= 0 ? 'border-income' : 'border-expense'"
+      <InsightMetricCard
+        title="Net Cash Flow"
+        :value="formatCurrency(netCashFlow)"
+        v-model:modelValue="netCashFlowTimeRange"
+        v-model:customRange="netCashFlowCustomDate"
+        :value-class="netCashFlow >= 0 ? 'text-income' : 'text-expense'"
+        :border-class="netCashFlow >= 0 ? 'border-income' : 'border-expense'"
       >
-        <div class="flex justify-between items-start">
-          <div class="text-gray-900 text-sm font-medium">
-            Net Cash Flow
+        <template #footer>
+          <div class="text-xs text-gray-400 mt-1">
+            Based on {{ getTimeRangeLabel(netCashFlowTimeRange, getCustomRangeObj(netCashFlowCustomDate)) }}
           </div>
-          <!-- Dropdown -->
-          <select 
-            v-model="netCashFlowTimeRange"
-            class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
-          >
-            <option value="thisMonth">
-              This Month
-            </option>
-            <option value="last3Months">
-              Last 3 Months
-            </option>
-            <option value="last6Months">
-              Last 6 Months
-            </option>
-            <option value="lastYear">
-              Last Year
-            </option>
-            <option value="thisYear">
-              This Year
-            </option>
-            <option value="ytd">
-              YTD
-            </option>
-            <option value="allTime">
-              All Time
-            </option>
-          </select>
-        </div>
-        <div
-          class="text-3xl font-bold mt-2"
-          :class="netCashFlow >= 0 ? 'text-income' : 'text-expense'"
-        >
-          {{ formatCurrency(netCashFlow) }}
-        </div>
-        <div class="text-xs text-gray-400 mt-1">
-          Based on {{ getTimeRangeLabel(netCashFlowTimeRange) }}
-        </div>
-      </div>
+        </template>
+      </InsightMetricCard>
     </div>
 
     <!-- Charts Row 1 -->
@@ -427,36 +363,21 @@ const pacingLabelB = computed(() => {
             </h3>
           </div>
           <div class="flex-1 flex justify-end">
-            <select 
-              v-model="expenseBreakdownTimeRange"
-              class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer"
-            >
-              <option value="thisMonth">
-                This Month
-              </option>
-              <option value="last3Months">
-                Last 3 Months
-              </option>
-              <option value="last6Months">
-                Last 6 Months
-              </option>
-              <option value="lastYear">
-                Last Year
-              </option>
-              <option value="thisYear">
-                This Year
-              </option>
-              <option value="ytd">
-                YTD
-              </option>
-              <option value="allTime">
-                All Time
-              </option>
-            </select>
+            <InsightTimeRangeSelector
+              v-model:modelValue="expenseBreakdownTimeRange"
+              v-model:customRange="expenseBreakdownCustomDate"
+            />
           </div>
         </div>
         <div class="h-80">
-          <ExpenseBreakdownChart :breakdown="expenseBreakdownData" :time-range="expenseBreakdownTimeRange" />
+          <ExpenseBreakdownChart 
+            :breakdown="expenseBreakdownData" 
+            :time-range="expenseBreakdownTimeRange"
+            :custom-range="expenseBreakdownCustomRangeObj"
+          />
+        </div>
+        <div class="text-xs text-gray-400 mt-1 pl-1">
+          Based on {{ getTimeRangeLabel(expenseBreakdownTimeRange, getCustomRangeObj(expenseBreakdownCustomDate)) }}
         </div>
       </div>
 
