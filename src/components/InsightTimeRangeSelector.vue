@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from "vue";
-import { getDateRange } from "@/utils";
 import DatePicker from "primevue/datepicker";
-import { useFinanceStore } from "@/stores/finance";
 
 const props = defineProps<{
   modelValue: string;
@@ -16,17 +14,15 @@ const emit = defineEmits<{
   (e: "update:customRange", value: any): void;
 }>();
 
-const store = useFinanceStore();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const tempCustomDate = ref<any>(null);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const datePickerRef = ref<any>(null);
+const localValue = ref(props.modelValue);
 
-// Watchers to apply temp date to final when range is complete
-watch(tempCustomDate, (val) => {
-  if (Array.isArray(val) && val[0] && val[1]) {
-    emit("update:customRange", val);
-  }
+// Sync local value with prop
+watch(() => props.modelValue, (val) => {
+  localValue.value = val;
 });
 
 // Helper to reliably open DatePicker
@@ -51,26 +47,46 @@ function showDatePicker() {
   }
 }
 
-// Watchers to trigger date pickers when 'custom' is selected
-watch(() => props.modelValue, async (newVal, oldVal) => {
-  if (newVal === 'custom_edit') {
-    tempCustomDate.value = props.customRange;
-    await nextTick();
-    showDatePicker();
-    emit("update:modelValue", 'custom');
-  } else if (newVal === 'custom') {
-    // Only pre-fill if we don't have a value yet
-    // And ensure we don't overwrite if it's already set (unless switching from edit)
-    if (!props.customRange && oldVal && oldVal !== 'custom_edit') {
-        const { startDate, endDate } = getDateRange(oldVal, store.transactions);
-        const range = [startDate, endDate];
-        emit("update:customRange", range);
-        tempCustomDate.value = range;
+function onSelectChange(event: Event) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const newVal = (event.target as any).value;
+  localValue.value = newVal;
+
+  if (newVal === 'custom') {
+    // If we have a custom range already, use it. Otherwise start empty.
+    if (props.customRange) {
+        tempCustomDate.value = props.customRange;
+    } else {
+        tempCustomDate.value = null;
     }
-    await nextTick();
-    showDatePicker();
+    nextTick(() => showDatePicker());
+    // Do NOT emit update:modelValue yet
+  } else if (newVal === 'custom_edit') {
+    tempCustomDate.value = props.customRange;
+    nextTick(() => showDatePicker());
+    // Do NOT emit yet
+  } else {
+    emit("update:modelValue", newVal);
   }
-});
+}
+
+function onDatePickerHide() {
+  // Check if we have a valid range
+  if (Array.isArray(tempCustomDate.value) && tempCustomDate.value[0] && tempCustomDate.value[1]) {
+     emit("update:customRange", tempCustomDate.value);
+     
+     // Now we confirm the switch to custom
+     if (localValue.value === 'custom' || localValue.value === 'custom_edit') {
+         emit("update:modelValue", 'custom');
+         localValue.value = 'custom';
+     }
+  } else {
+     // User cancelled or didn't pick full range
+     // Revert local value to parent's value
+     localValue.value = props.modelValue;
+     tempCustomDate.value = null; 
+  }
+}
 </script>
 
 <template>
@@ -83,11 +99,12 @@ watch(() => props.modelValue, async (newVal, oldVal) => {
       :hide-on-range-selection="true"
       date-format="yy-mm-dd"
       class="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
+      @hide="onDatePickerHide"
     />
     <select 
-      :value="modelValue"
+      :value="localValue"
       class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none cursor-pointer min-w-[8rem] z-10 relative"
-      @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
+      @change="onSelectChange"
     >
       <option value="thisMonth">
         This Month
