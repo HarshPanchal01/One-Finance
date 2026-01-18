@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import fs from "node:fs";
 import { app } from "electron";
-import { Account, AccountType, Category, CreateTransactionInput, LedgerMonth, SearchOptions, Transaction, TransactionWithCategory } from "@/types";
+import { Account, AccountType, Category, CreateTransactionInput, LedgerMonth, SearchOptions, Transaction, TransactionWithCategory, MonthlyTrend, DailyTransactionSum } from "@/types";
 
 // Use createRequire for native module (better-sqlite3)
 const require = createRequire(import.meta.url);
@@ -287,7 +287,7 @@ export function insertAccount(account: Account): number | null{
     const result = insert.run(account.accountName, account.institutionName, account.startingBalance, account.accountTypeId, Number(account.isDefault));
 
     return Number(result.lastInsertRowid);
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -299,7 +299,7 @@ export function insertAccountType(accountType: AccountType): number | null {
       .run(accountType.type);
 
     return Number(result.lastInsertRowid);
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -482,9 +482,9 @@ export function deleteCategory(id: number): boolean {
 
 export function searchTransactions(
   options: SearchOptions,
-  limit: number = 50
+  limit?: number
 ): TransactionWithCategory[] {
-  const { text = "", categoryIds = [], accountIds = [], fromDate, toDate, minAmount, maxAmount, type } = options;
+  const { text = "", categoryIds = [], accountIds = [], fromDate, toDate, minAmount, maxAmount, type, sortOrder = 'desc' } = options;
   const searchTerm = `%${text.trim()}%`;
 
   let sql = `
@@ -553,8 +553,13 @@ export function searchTransactions(
     params.push(searchTerm, searchTerm, searchTerm);
   }
 
-  sql += " ORDER BY t.date DESC, t.id DESC LIMIT ?";
-  params.push(limit);
+  const validSortOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+  sql += ` ORDER BY t.date ${validSortOrder}, t.id DESC`;
+
+  if (limit) {
+    sql += " LIMIT ?";
+    params.push(limit);
+  }
 
   return db.prepare(sql).all(...params) as TransactionWithCategory[];
 }
@@ -576,6 +581,15 @@ export function getTransactions(
   let query = baseQuery;
   const params: (number | string)[] = [];
 
+  if (ledgerMonth) {
+    // Filter by year and month
+    // SQLite strftime('%Y', date) returns 'YYYY', strftime('%m', date) returns 'MM'
+    query += " WHERE strftime('%Y', t.date) = ? AND strftime('%m', t.date) = ?";
+    // Ensure month is padded (e.g. 1 -> '01')
+    const monthStr = ledgerMonth.month.toString().padStart(2, '0');
+    params.push(ledgerMonth.year.toString(), monthStr);
+  }
+
   query += " ORDER BY t.date DESC, t.id DESC";
 
   if (limit) {
@@ -583,21 +597,63 @@ export function getTransactions(
     params.push(limit);
   }
 
-  const result = db.prepare(query).all(...params) as TransactionWithCategory[];
+  return db.prepare(query).all(...params) as TransactionWithCategory[];
+}
 
-  if(ledgerMonth == undefined) {
-    return result;
+export function getMonthlyTrends(year: number): MonthlyTrend[] {
+  const query = `
+    SELECT 
+      strftime('%m', date) as monthStr,
+      SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as totalIncome,
+      SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as totalExpenses
+    FROM transactions 
+    WHERE strftime('%Y', date) = ?
+    GROUP BY monthStr
+    ORDER BY monthStr
+  `;
+
+  const rows = db.prepare(query).all(year.toString()) as { monthStr: string, totalIncome: number, totalExpenses: number }[];
+
+  // Fill in missing months and format
+  const trends: MonthlyTrend[] = [];
+  for (let m = 1; m <= 12; m++) {
+    const monthStr = m.toString().padStart(2, '0');
+    const row = rows.find(r => r.monthStr === monthStr);
+    const income = row ? row.totalIncome : 0;
+    const expense = row ? row.totalExpenses : 0;
+    
+    trends.push({
+      month: m,
+      year: year,
+      totalIncome: income,
+      totalExpenses: expense,
+      balance: income - expense
+    });
   }
+  
+  return trends;
+}
 
-  const transactions = result.filter((item) => {
-    let dateList = item.date.split("-");
-    let transactionMonth = Number(dateList[1]);
-    let transactionYear = Number(dateList[0]);
+export function getDailyTransactionSum(year: number, month: number, type: 'income' | 'expense'): DailyTransactionSum[] {
+  const query = `
+    SELECT 
+      strftime('%d', date) as dayStr,
+      SUM(amount) as total
+    FROM transactions 
+    WHERE strftime('%Y', date) = ? 
+      AND strftime('%m', date) = ? 
+      AND type = ?
+    GROUP BY dayStr
+    ORDER BY dayStr
+  `;
 
-    return transactionMonth === ledgerMonth.month && transactionYear === ledgerMonth.year;
-  });
+  const monthStr = month.toString().padStart(2, '0');
+  const rows = db.prepare(query).all(year.toString(), monthStr, type) as { dayStr: string, total: number }[];
 
-  return transactions;
+  return rows.map(r => ({
+    day: parseInt(r.dayStr, 10),
+    total: r.total
+  }));
 }
 
 export function getTransactionById(
@@ -689,6 +745,105 @@ export function deleteTransaction(id: number): boolean {
   const stmt = db.prepare("DELETE FROM transactions WHERE id = ?");
   const result = stmt.run(id);
   return result.changes > 0;
+}
+
+export function getRollingMonthlyTrends(): MonthlyTrend[] {
+  const now = new Date();
+  
+  // 13 months inclusive: Current Month back to Same Month Last Year
+  // Start Date: 1st of (Current Month - 12)
+  const startDate = new Date(now.getFullYear(), now.getMonth() - 12, 1);
+  // End Date: Last day of Current Month
+  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  
+  const toSqlDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  
+  const startStr = toSqlDate(startDate);
+  const endStr = toSqlDate(endDate);
+
+  const query = `
+    SELECT 
+      strftime('%Y', date) as yearStr,
+      strftime('%m', date) as monthStr,
+      SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as totalIncome,
+      SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as totalExpenses
+    FROM transactions 
+    WHERE date >= ? AND date <= ?
+    GROUP BY yearStr, monthStr
+    ORDER BY yearStr, monthStr
+  `;
+  
+  const rows = db.prepare(query).all(startStr, endStr) as { yearStr: string, monthStr: string, totalIncome: number, totalExpenses: number }[];
+  
+  const trends: MonthlyTrend[] = [];
+  const ptr = new Date(startDate);
+  
+  // Loop 13 times
+  for (let i = 0; i < 13; i++) {
+     const y = ptr.getFullYear();
+     const m = ptr.getMonth() + 1;
+     const yearStr = y.toString();
+     const monthStr = m.toString().padStart(2, '0');
+     
+     const row = rows.find(r => r.yearStr === yearStr && r.monthStr === monthStr);
+     
+     trends.push({
+         year: y,
+         month: m,
+         totalIncome: row ? row.totalIncome : 0,
+         totalExpenses: row ? row.totalExpenses : 0,
+         balance: row ? row.totalIncome - row.totalExpenses : 0
+     });
+     
+     ptr.setMonth(ptr.getMonth() + 1);
+  }
+  
+  return trends;
+}
+
+export function getTotalMonthSpend(year: number, month: number): number {
+    const query = `
+        SELECT SUM(amount) as total
+        FROM transactions
+        WHERE strftime('%Y', date) = ? AND strftime('%m', date) = ? AND type = 'expense'
+    `;
+    const monthStr = month.toString().padStart(2, '0');
+    const result = db.prepare(query).get(year.toString(), monthStr) as { total: number };
+    return result.total || 0;
+}
+
+export function getNetWorthTrend(): { month: number, year: number, balance: number }[] {
+    // 1. Get sum of all starting balances
+    const accounts = getAccounts();
+    const initialBalance = accounts.reduce((sum, acc) => sum + acc.startingBalance, 0);
+
+    // 2. Get monthly net changes (income - expense) for all time
+    const query = `
+        SELECT 
+            strftime('%Y', date) as yearStr,
+            strftime('%m', date) as monthStr,
+            SUM(CASE WHEN type = 'income' THEN amount ELSE -amount END) as netChange
+        FROM transactions 
+        GROUP BY yearStr, monthStr
+        ORDER BY yearStr ASC, monthStr ASC
+    `;
+    
+    const rows = db.prepare(query).all() as { yearStr: string, monthStr: string, netChange: number }[];
+    
+    // 3. Calculate cumulative balance
+    const trends: { month: number, year: number, balance: number }[] = [];
+    let runningBalance = initialBalance;
+    
+    for (const row of rows) {
+        runningBalance += row.netChange;
+        trends.push({
+            year: parseInt(row.yearStr),
+            month: parseInt(row.monthStr),
+            balance: runningBalance
+        });
+    }
+    
+    return trends;
 }
 
 // Export the database instance for advanced operations if needed

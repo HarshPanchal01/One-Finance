@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, toRaw } from "vue";
+import { computed, onMounted, toRaw } from "vue";
 import { useFinanceStore } from "@/stores/finance";
 import { formatCurrency } from "@/utils";
-import type { TransactionWithCategory } from "@/types";
 import TransactionItem from "@/components/TransactionItem.vue";
 import TransactionModal from "@/components/TransactionModal.vue";
 import ConfirmationModal from "@/components/ConfirmationModal.vue";
@@ -32,36 +31,20 @@ onMounted(() => {
   // If a period is already selected (from Sidebar), fetch for that period.
   // If not (Global Mode), fetch all.
   const ledgerMonth = toRaw(store.currentLedgerMonth) ?? undefined;
-  store.fetchTransactions(ledgerMonth);
-});
-
-// Reactively update when period changes
-watch(
-  () => store.currentLedgerMonth,
-  async (newLedgerMonth) => {
-    const plainMonth = newLedgerMonth
-      ? toRaw(newLedgerMonth)
-      : undefined;
-
-    await store.fetchTransactions(plainMonth);
+  
+  if (ledgerMonth) {
+    store.fetchTransactions(ledgerMonth);
+  } else if (store.selectedYear) {
+    store.fetchTransactions(null, store.selectedYear);
+  } else {
+    store.fetchTransactions();
   }
-);
-
-// Filter state
-const searchQuery = ref("");
-const filterType = ref<"all" | "income" | "expense">("all");
+});
 
 // Filtered transactions
 const filteredTransactions = computed(() => {
   // If searching globally, use search results as base
-  let result = store.isSearching ? store.searchResults : store.transactions;
-
-  // Filter by type
-  if (filterType.value !== "all") {
-    result = result.filter((t) => t.type === filterType.value);
-  }
-
-  return result;
+  return store.isSearching ? store.searchResults : store.transactions;
 });
 
 // Summary for filtered transactions
@@ -97,6 +80,9 @@ function goToAccount(accountId: number) {
           <span v-if="store.isSearching">Global Search</span>
           <span v-else-if="store.currentLedgerMonth">
             {{ store.currentLedgerMonth?.month }}/{{ store.currentLedgerMonth?.year }}
+          </span>
+          <span v-else-if="store.selectedYear">
+            {{ store.selectedYear }} (All Months)
           </span>
           <span v-else>All Transactions</span>
           ({{ filteredTransactions.length }})
@@ -151,52 +137,6 @@ function goToAccount(accountId: number) {
       </div>
     </div>
 
-    <!-- Filters -->
-    <div class="card p-4">
-      <div class="flex flex-col sm:flex-row gap-3">
-        <!-- Search Input Removed (Using TopBar) -->
-
-        <!-- Type Filter -->
-        <div
-          class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 w-full sm:w-auto"
-        >
-          <button
-            :class="[
-              'flex-1 sm:flex-none px-4 py-2 text-sm font-medium transition-colors',
-              filterType === 'all'
-                ? 'bg-primary-500 text-white'
-                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600',
-            ]"
-            @click="filterType = 'all'"
-          >
-            All
-          </button>
-          <button
-            :class="[
-              'flex-1 sm:flex-none px-4 py-2 text-sm font-medium transition-colors border-l border-gray-300 dark:border-gray-600',
-              filterType === 'income'
-                ? 'bg-income text-white'
-                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600',
-            ]"
-            @click="filterType = 'income'"
-          >
-            Income
-          </button>
-          <button
-            :class="[
-              'flex-1 sm:flex-none px-4 py-2 text-sm font-medium transition-colors border-l border-gray-300 dark:border-gray-600',
-              filterType === 'expense'
-                ? 'bg-expense text-white'
-                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600',
-            ]"
-            @click="filterType = 'expense'"
-          >
-            Expenses
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- Transaction List -->
     <div class="card p-4">
       <div
@@ -211,7 +151,7 @@ function goToAccount(accountId: number) {
         </p>
         <p class="text-sm mt-1">
           {{
-            searchQuery || filterType !== "all"
+            store.isSearching
               ? "Try adjusting your filters"
               : "Add your first transaction to get started!"
           }}

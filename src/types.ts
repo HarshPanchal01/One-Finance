@@ -74,6 +74,19 @@ export interface CategoryBreakdown {
   count: number;
 }
 
+export interface MonthlyTrend {
+  month: number;
+  year: number;
+  totalIncome: number;
+  totalExpenses: number;
+  balance: number;
+}
+
+export interface DailyTransactionSum {
+  day: number;
+  total: number;
+}
+
 export interface SearchOptions {
   text?: string;
   categoryIds?: number[];
@@ -83,4 +96,5 @@ export interface SearchOptions {
   minAmount?: number | null;
   maxAmount?: number | null;
   type?: "income" | "expense" | null;
+  sortOrder?: 'desc' | 'asc';
 }
