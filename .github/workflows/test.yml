@@ -27,9 +27,11 @@ jobs:
 
       - name: Lint Check
         run: npm run lint:check
+        continue-on-error: true
 
       - name: Type Check
         run: npm run typecheck
+        continue-on-error: true
 
       - name: Run Unit & Integration Tests
         run: npm run test

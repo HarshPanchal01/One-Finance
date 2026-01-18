@@ -52,11 +52,11 @@ describe('TopBar.vue', () => {
     });
 
     const input = wrapper.find('input[type="text"]');
-    input.element.value = 'Pizza';
+    (input.element as HTMLInputElement).value = 'Pizza';
     await input.trigger('input');
     
     // Ensure v-model updated
-    expect(input.element.value).toBe('Pizza');
+    expect((input.element as HTMLInputElement).value).toBe('Pizza');
     
     // Trigger via button click to avoid keydown event simulation issues
     const searchBtn = wrapper.find('button[title="Search"]');
