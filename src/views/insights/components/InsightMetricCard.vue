@@ -37,6 +37,10 @@ const toggle = (event: Event) => {
     <div class="flex justify-between items-start">
       <div class="text-gray-900 dark:text-gray-100 text-sm font-medium flex items-center gap-2">
         {{ title }}
+        <i 
+          class="pi pi-info-circle text-primary-500 cursor-pointer transition-colors text-xs" 
+          @click="toggle"
+        />
       </div>
       <div>
         <InsightTimeRangeSelector
@@ -50,9 +54,8 @@ const toggle = (event: Event) => {
     
     <div class="mt-2 flex items-baseline gap-2">
       <div 
-        class="text-3xl font-bold transition-all duration-200 cursor-help hover:scale-105 hover:opacity-80 origin-left select-none"
+        class="text-3xl font-bold transition-all duration-200 select-none"
         :class="valueClass"
-        @click="toggle"
       >
         {{ value }}
       </div>

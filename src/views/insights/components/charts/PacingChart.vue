@@ -50,12 +50,6 @@ const pacingData = computed(() => {
         label: props.labelA,
         data: currentData,
         borderColor: "#0ea5e9", // Primary Brand Blue
-        // Dynamic area fill relative to comparison line (dataset 1)
-        fill: {
-          target: 1,
-          above: "rgba(239, 68, 68, 0.25)", // Red if current > comparison
-          below: "rgba(34, 197, 94, 0.25)", // Green if current < comparison
-        },
         tension: 0.4,
         pointHoverRadius: 6,
         pointHitRadius: 10
@@ -63,7 +57,7 @@ const pacingData = computed(() => {
       {
         label: props.labelB,
         data: prevData,
-        borderColor: "#9ca3af", // Gray
+        borderColor: "#fbbf24", // Orangish-Yellow
         borderDash: isFlatLine ? [5, 5] : [], // Dashed for average, solid for actual history
         borderWidth: isFlatLine ? 2 : 2,
         pointRadius: isFlatLine ? 0 : 3, // Hide points for average

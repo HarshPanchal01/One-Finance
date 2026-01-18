@@ -165,17 +165,15 @@ const pacingLabelB = computed(() => getPacingLabel(pacingDateB.value, 'Select Mo
         v-model:custom-range="savingsCustomDate"
         title="Savings Rate"
         :value="savingsRate.toFixed(1) + '%'"
-        :value-class="savingsRate >= 20 ? 'text-income' : 'text-expense'"
-        :border-class="savingsRate >= 20 ? 'border-income' : (savingsRate > 0 ? 'border-primary-500' : 'border-expense')"
+        :value-class="savingsRate > 0 ? 'text-income' : 'text-expense'"
+        :border-class="savingsRate > 0 ? 'border-income' : 'border-expense'"
         formula-title="Savings Rate Formula"
         formula="(Income - Expenses) / Income"
         :calculation="`(${formatCurrency(savingsData.income)} - ${formatCurrency(savingsData.expense)}) / ${formatCurrency(savingsData.income)}`"
       >
         <template #footer>
-          <div class="text-xs text-gray-400 mt-1 flex gap-2">
-            <span>Based on {{ getTimeRangeLabel(savingsTimeRange, getCustomRangeObj(savingsCustomDate)) }}</span>
-            <span>•</span>
-            <span>Target: >20%</span>
+          <div class="text-xs text-gray-400 mt-1">
+            Based on {{ getTimeRangeLabel(savingsTimeRange, getCustomRangeObj(savingsCustomDate)) }}
           </div>
         </template>
       </InsightMetricCard>
@@ -273,7 +271,7 @@ const pacingLabelB = computed(() => getPacingLabel(pacingDateB.value, 'Select Mo
               <span class="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Current</span>
             </div>
             <div class="flex items-center gap-2">
-              <div class="w-3 h-1.5 rounded-sm border border-gray-400 border-dashed shrink-0 bg-gray-100 dark:bg-gray-700" />
+              <div class="w-3 h-1.5 rounded-sm bg-amber-400 shrink-0" />
               <span class="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Comparison</span>
             </div>
           </div>
@@ -299,7 +297,7 @@ const pacingLabelB = computed(() => getPacingLabel(pacingDateB.value, 'Select Mo
               <button
                 class="flex items-center gap-1.5 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors pointer-events-none"
               >
-                <span class="text-xs font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                <span class="text-xs font-semibold text-primary-500 whitespace-nowrap">
                   {{ pacingDateA ? pacingDateA.toLocaleString('default', { month: 'short', year: 'numeric' }) : 'Select Month' }}
                 </span>
               </button>
@@ -322,7 +320,7 @@ const pacingLabelB = computed(() => getPacingLabel(pacingDateB.value, 'Select Mo
               <button
                 class="flex items-center gap-1.5 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors pointer-events-none"
               >
-                <span class="text-xs font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                <span class="text-xs font-semibold text-amber-500 whitespace-nowrap">
                   {{ pacingDateB ? pacingDateB.toLocaleString('default', { month: 'short', year: 'numeric' }) : 'Select Month' }}
                 </span>
               </button>
