@@ -5,6 +5,7 @@ import { initializeDatabase } from './db'
 import { registerIpcHandlers } from './ipc'
 import fs from 'fs'
 
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // The built directory structure
@@ -29,10 +30,12 @@ let win: BrowserWindow | null;
 
 function createWindow() {
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    icon: path.join(__dirname, "assets", 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
+    width: 1400,
+    height: 900,
   });
 
   // Test active push message to Renderer-process.
@@ -40,11 +43,16 @@ function createWindow() {
     win?.webContents.send('main-process-message', (new Date).toLocaleString());
   });
 
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL);
-  } else {
-    // win.loadFile('dist/index.html')
-    win.loadFile(path.join(RENDERER_DIST, 'index.html'));
+  if (app.isPackaged) {
+    win.loadFile(path.join("dist/index.html"));
+    
+  } 
+  // else if (VITE_DEV_SERVER_URL) {
+  //   // win.loadFile('dist/index.html')
+  //   win.loadURL(VITE_DEV_SERVER_URL);
+  // }
+  else{
+    win.loadFile(path.join("dist/index.html"));
   }
 }
 

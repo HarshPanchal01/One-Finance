@@ -2,7 +2,7 @@
   "name": "one-finance",
   "productName": "OneFinance",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -28,6 +28,7 @@
     "autoprefixer": "^10.4.23",
     "electron": "^39.2.7",
     "electron-builder": "^24.13.3",
+    "electron-icon-builder": "^2.0.1",
     "eslint": "^9.39.2",
     "eslint-plugin-vue": "^10.6.2",
     "postcss": "^8.5.6",
@@ -40,5 +41,18 @@
     "vue": "^3.5.26",
     "vue-tsc": "^3.2.1"
   },
-  "main": "dist-electron/main.js"
+  "main": "dist-electron/main.js",
+  "build": {
+    "appId": "com.example.OneFinance",
+    "productName": "OneFinance",
+    "win": {
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "icon": "assets/icon.png"
+    }
+  }
 }
