@@ -46,13 +46,16 @@ jobs:
           # Determine Tag Name (ensure v-prefix)
           if [[ $VERSION_INPUT != v* ]]; then TAG="v$VERSION_INPUT"; else TAG="$VERSION_INPUT"; fi
           
-          # Commit and Push
+          # Commit only if there are changes
           git add package.json package-lock.json
-          git commit -m "chore: release $TAG"
-          git tag -a $TAG -m "Release $TAG"
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: release $TAG"
+            git push origin HEAD:main
+          fi
           
-          git push origin HEAD:main
-          git push origin $TAG
+          # Tag (force to move existing tag if needed)
+          git tag -fa $TAG -m "Release $TAG"
+          git push origin $TAG --force
           
           # Output tag for next job
           echo "tag=$TAG" >> $GITHUB_OUTPUT
