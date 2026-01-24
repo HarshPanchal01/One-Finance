@@ -3,25 +3,53 @@
   "appId": "com.onefinance.app",
   "asar": true,
   "productName": "OneFinance",
+  "copyright": "Copyright (c) 2026 Harsh Panchal, James Mata",
   "directories": {
     "output": "release/${version}"
   },
-  "publish": {
-    "provider": "github",
-    "owner": "HarshPanchal01",
-    "repo": "One-Finance"
-  },
   "files": [
-    "dist",
-    "dist-electron"
+    "dist/**/*",
+    "dist-electron/**/*",
+    "!**/*.map",
+    "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+    "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+    "!**/node_modules/*.d.ts",
+    "!**/node_modules/.bin"
   ],
   "mac": {
+    "icon": "assets/icon.icns",
     "target": [
-      "dmg"
+      {
+        "target": "dmg",
+        "arch": ["x64", "arm64"]
+      },
+      {
+        "target": "zip",
+        "arch": ["x64", "arm64"]
+      }
     ],
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
+  "dmg": {
+    "contents": [
+      {
+        "x": 130,
+        "y": 220
+      },
+      {
+        "x": 410,
+        "y": 220,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ],
+    "window": {
+      "width": 540,
+      "height": 400
+    }
+  },
   "win": {
+    "icon": "assets/icon.ico",
     "target": [
       {
         "target": "nsis",
@@ -36,14 +64,21 @@
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
+    "deleteAppDataOnUninstall": false,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "OneFinance",
+    "uninstallDisplayName": "OneFinance"
   },
   "linux": {
     "icon": "assets/icon.png",
+    "category": "Office",
     "target": [
       "AppImage",
       "deb"
     ],
-    "artifactName": "${productName}-Linux-${version}.${ext}"
+    "artifactName": "${productName}-Linux-${version}.${ext}",
+    "synopsis": "Local-first personal finance manager",
+    "description": "A local-first personal finance management cross-platform desktop application."
   }
 }

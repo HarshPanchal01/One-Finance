@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g. 1.0.1)'
+        description: 'Release version (e.g. v1.0.1)'
         required: true
         type: string
       draft:
@@ -53,21 +53,33 @@ jobs:
             git push origin HEAD:main
           fi
           
-          # Tag (force to move existing tag if needed)
-          git tag -fa $TAG -m "Release $TAG"
-          git push origin $TAG --force
+          # Check if tag already exists
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Error: Tag $TAG already exists. Please use a new version number."
+            exit 1
+          fi
+
+          # Tag
+          git tag -a $TAG -m "Release $TAG"
+          git push origin $TAG
           
           # Output tag for next job
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-  build_and_publish:
-    name: Build & Publish Artifacts
+  build_and_release:
+    name: Build & Release
     needs: prepare_release
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            build_cmd: npm run dist:linux
+          - os: macos-latest
+            build_cmd: npm run dist:mac
+          - os: windows-latest
+            build_cmd: npm run dist:win
     
     steps:
       - name: Checkout Tagged Code
@@ -76,7 +88,7 @@ jobs:
           ref: ${{ needs.prepare_release.outputs.release_tag }}
       
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: 'npm'
@@ -84,11 +96,22 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Build and Release
+      - name: Build Artifacts
+        run: ${{ matrix.build_cmd }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          # The '--' passes arguments to the underlying electron-builder command
-          # We force publishing. Electron-builder handles creating/finding the GitHub Release.
-          npm run build -- --publish always
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || needs.prepare_release.outputs.release_tag != ''
+        with:
+          tag_name: ${{ needs.prepare_release.outputs.release_tag }}
+          files: |
+            release/*.dmg
+            release/*.exe
+            release/*.AppImage
+            release/*.deb
+            release/*.zip
+          draft: ${{ inputs.draft }}
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}

@@ -22,7 +22,11 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.ts,.tsx --fix",
     "lint:check": "eslint . --ext .vue,.js,.ts,.tsx",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "dist:mac": "npm run build -- --mac",
+    "dist:win": "npm run build -- --win",
+    "dist:linux": "npm run build -- --linux",
+    "dist:all": "npm run build -- -mwl"
   },
   "dependencies": {
     "@primevue/themes": "^4.5.4",
