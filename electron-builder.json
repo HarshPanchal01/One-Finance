@@ -30,24 +30,6 @@
     ],
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
-  "dmg": {
-    "contents": [
-      {
-        "x": 130,
-        "y": 220
-      },
-      {
-        "x": 410,
-        "y": 220,
-        "type": "link",
-        "path": "/Applications"
-      }
-    ],
-    "window": {
-      "width": 540,
-      "height": 400
-    }
-  },
   "win": {
     "icon": "assets/icon.ico",
     "target": [
