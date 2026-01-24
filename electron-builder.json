@@ -5,7 +5,7 @@
   "productName": "OneFinance",
   "copyright": "Copyright (c) 2026 Harsh Panchal, James Mata",
   "directories": {
-    "output": "release/${version}"
+    "output": "release"
   },
   "files": [
     "dist/**/*",
