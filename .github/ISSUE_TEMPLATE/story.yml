@@ -1,0 +1,37 @@
+name: Development Story
+description: A story outlining a new feature or development task.
+title: "[STORY] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Add a brief, clear summary of the story/feature here. Explain the "what" and "why".
+    validations:
+      required: true
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Proposed Implementation
+      description: Detail the technical steps required to complete this story.
+      placeholder: |
+        * Step 1: Describe the first action...
+        * Step 2: ...
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Measurable requirements that must be met for the story to be complete.
+      value: |
+        - [ ] The feature works as described in the summary.
+        - [ ] Requirement 1...
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Add any relevant mockups, wireframes, technical notes, or links.

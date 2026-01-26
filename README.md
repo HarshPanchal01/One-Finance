@@ -1,4 +1,4 @@
-# One Finance
+# OneFinance
 
 A local-first personal finance manager built with modern web technologies and Electron.
 
@@ -82,8 +82,8 @@ You can download the latest version from the [Releases](https://github.com/Harsh
 
 ### Prerequisites
 
-*   Node.js (v16 or higher recommended)
-*   npm or yarn
+*   Node.js (v24+ recommended)
+*   npm
 
 ### Setup
 

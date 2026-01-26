@@ -171,7 +171,7 @@ function seedDefaultAccountData(): void{
   ];
 
   const defaultAccounts = [
-    {accountName: "One Finance", institutionName: null, startingBalance: 0, accountTypeId: 0, isDefault: true},
+    {accountName: "OneFinance", institutionName: null, startingBalance: 0, accountTypeId: 0, isDefault: true},
   ];
 
   const insertAccountType = db.prepare(

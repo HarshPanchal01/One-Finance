@@ -126,7 +126,7 @@ export function useDataManagement() {
     if (!verified) {
       return await errorModal?.openConfirmation({
         title: "Import Error",
-        message: "The selected file is not a valid One Finance export file.",
+        message: "The selected file is not a valid OneFinance export file.",
         confirmText: "Okay",
       });
     }

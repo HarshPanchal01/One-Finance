@@ -169,10 +169,10 @@ async function requestDeleteYear() {
     <!-- App Header -->
     <div class="p-4 border-b border-gray-200 dark:border-gray-700">
       <div class="flex items-center space-x-3">
-        <img :src="logoUrl" alt="One Finance" class="w-10 h-10 rounded-xl" />
+        <img :src="logoUrl" alt="OneFinance" class="w-10 h-10 rounded-xl" />
         <div>
           <h1 class="text-lg font-bold text-gray-900 dark:text-white">
-            One Finance
+            OneFinance
           </h1>
           <p
             v-if="store.currentLedgerMonth"
