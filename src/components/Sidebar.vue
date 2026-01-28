@@ -35,7 +35,7 @@ const navItems = [
   { id: "transactions", label: "Transactions", icon: "pi-list" },
   { id: "insights", label: "Insights", icon: "pi-chart-line" },
   { id: "accounts", label: "Accounts", icon: "pi-wallet" },
-  { id: "categories", label: "Categories", icon: "pi-tags" },
+  { id: "categories", label: "Labels", icon: "pi-tags" },
   { id: "settings", label: "Settings", icon: "pi-cog" },
 ];
 
